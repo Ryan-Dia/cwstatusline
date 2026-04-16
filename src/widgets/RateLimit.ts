@@ -1,5 +1,10 @@
 import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
+function buildBar(pct: number, width = 8): string {
+  const filled = Math.round((pct / 100) * width);
+  return '█'.repeat(filled) + '░'.repeat(width - filled);
+}
+
 function formatRemaining(seconds: number): string {
   const s = Math.max(0, Math.floor(seconds));
   const h = Math.floor(s / 3600);
@@ -18,6 +23,7 @@ export const RateLimitWidget: Widget = {
     const pct = Math.round(fiveHour.used_percentage);
     const remainingSec = fiveHour.resets_at - ctx.now.getTime() / 1000;
     const timeLabel = formatRemaining(remainingSec);
-    return `${pct}% (${timeLabel})`;
+    const bar = buildBar(pct);
+    return `5h ${bar} ${pct}% (${timeLabel})`;
   },
 };

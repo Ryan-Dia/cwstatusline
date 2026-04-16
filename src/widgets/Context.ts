@@ -30,6 +30,6 @@ export const ContextWidget: Widget = {
     const bar = buildBar(pct);
     const usedStr = formatTokens(used);
     const maxStr = formatTokens(max);
-    return `${bar} ${usedStr}/${maxStr}`;
+    return `Ctx ${bar} ${usedStr}/${maxStr}`;
   },
 };
