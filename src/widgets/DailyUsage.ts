@@ -1,4 +1,4 @@
-import type { Widget, RenderContext, WidgetConfig } from "./types.js";
+import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
 function fmtTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -7,8 +7,8 @@ function fmtTokens(n: number): string {
 }
 
 export const DailyUsageWidget: Widget = {
-  id: "dailyUsage",
-  labelKey: "widget.dailyUsage",
+  id: 'dailyUsage',
+  labelKey: 'widget.dailyUsage',
   render(ctx: RenderContext, _cfg: WidgetConfig): string | null {
     if (!ctx.usage) return null;
     return fmtTokens(ctx.usage.dailyTokens);

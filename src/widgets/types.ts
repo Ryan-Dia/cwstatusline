@@ -1,8 +1,8 @@
-import type { ClaudeStdin } from "../data/stdin.js";
-import type { UsageSnapshot } from "../data/usage.js";
-import type { CodexSnapshot } from "../data/codex.js";
-import type { Theme } from "../theme/index.js";
-import type { I18nKey } from "../i18n/index.js";
+import type { ClaudeStdin } from '../data/stdin.js';
+import type { UsageSnapshot } from '../data/usage.js';
+import type { CodexSnapshot } from '../data/codex.js';
+import type { Theme } from '../theme/index.js';
+import type { I18nKey } from '../i18n/index.js';
 
 export interface RenderContext {
   stdin: ClaudeStdin;

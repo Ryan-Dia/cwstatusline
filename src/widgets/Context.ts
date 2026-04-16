@@ -1,13 +1,13 @@
-import type { Widget, RenderContext, WidgetConfig } from "./types.js";
+import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
 function buildBar(pct: number, width = 8): string {
   const filled = Math.round((pct / 100) * width);
-  return "█".repeat(filled) + "░".repeat(width - filled);
+  return '█'.repeat(filled) + '░'.repeat(width - filled);
 }
 
 export const ContextWidget: Widget = {
-  id: "context",
-  labelKey: "widget.context",
+  id: 'context',
+  labelKey: 'widget.context',
   render(ctx: RenderContext, _cfg: WidgetConfig): string | null {
     const inputTokens = ctx.stdin.usage?.input_tokens ?? 0;
     const cacheRead = ctx.stdin.usage?.cache_read_input_tokens ?? 0;
