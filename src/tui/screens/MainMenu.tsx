@@ -18,10 +18,7 @@ export default function MainMenu({ onSelect }: Props): React.ReactElement {
 
   return (
     <Box flexDirection="column" marginTop={1}>
-      <SelectInput
-        items={items}
-        onSelect={(item) => onSelect(item.value)}
-      />
+      <SelectInput items={items} onSelect={(item) => onSelect(item.value)} />
     </Box>
   );
 }

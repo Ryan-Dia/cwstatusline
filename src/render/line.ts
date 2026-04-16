@@ -3,11 +3,7 @@ import type { RenderContext } from '../widgets/types.js';
 import { getWidget } from '../widgets/index.js';
 import type { WidgetCfg } from '../config/schema.js';
 
-export function renderLine(
-  widgetCfgs: WidgetCfg[],
-  ctx: RenderContext,
-  separator: string,
-): string {
+export function renderLine(widgetCfgs: WidgetCfg[], ctx: RenderContext, separator: string): string {
   const parts: string[] = [];
 
   for (const cfg of widgetCfgs) {

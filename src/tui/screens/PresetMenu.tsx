@@ -18,9 +18,11 @@ const PRESET_LABEL_KEYS: Record<string, string> = {
   'multi-cli': 'tui.preset.multiCli',
 };
 
-export default function PresetMenu(
-  { currentSettings, onSelect, onBack }: Props,
-): React.ReactElement {
+export default function PresetMenu({
+  currentSettings,
+  onSelect,
+  onBack,
+}: Props): React.ReactElement {
   const items = [
     ...PRESET_NAMES.map((name) => ({
       label: t((PRESET_LABEL_KEYS[name] ?? name) as Parameters<typeof t>[0]),

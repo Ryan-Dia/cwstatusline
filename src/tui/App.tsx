@@ -86,7 +86,9 @@ export default function App({ initialSettings, onSave }: AppProps): React.ReactE
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="cyan">{t('tui.title')}</Text>
+      <Text bold color="cyan">
+        {t('tui.title')}
+      </Text>
       {saved && <Text color="green">✓ 저장됨</Text>}
       <MainMenu
         onSelect={(action) => {

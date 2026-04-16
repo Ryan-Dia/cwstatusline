@@ -38,7 +38,10 @@ export default function WidgetEditor({ lines, onSave, onBack }: Props): React.Re
         <SelectInput
           items={[...addable, { label: '← 뒤로', value: '__back__' }]}
           onSelect={(item) => {
-            if (item.value === '__back__') { setMode('view'); return; }
+            if (item.value === '__back__') {
+              setMode('view');
+              return;
+            }
             setCurrentLines([[...firstLine, { id: item.value }], ...currentLines.slice(1)]);
             setMode('view');
           }}
@@ -58,7 +61,10 @@ export default function WidgetEditor({ lines, onSave, onBack }: Props): React.Re
         <SelectInput
           items={[...removable, { label: '← 뒤로', value: '__back__' }]}
           onSelect={(item) => {
-            if (item.value === '__back__') { setMode('view'); return; }
+            if (item.value === '__back__') {
+              setMode('view');
+              return;
+            }
             const updated = firstLine.filter((w) => w.id !== item.value);
             setCurrentLines([updated, ...currentLines.slice(1)]);
             setMode('view');
@@ -75,9 +81,18 @@ export default function WidgetEditor({ lines, onSave, onBack }: Props): React.Re
       <SelectInput
         items={actions}
         onSelect={async (item) => {
-          if (item.value === 'add') { setMode('add'); return; }
-          if (item.value === 'remove') { setMode('remove'); return; }
-          if (item.value === 'save') { await onSave(currentLines); return; }
+          if (item.value === 'add') {
+            setMode('add');
+            return;
+          }
+          if (item.value === 'remove') {
+            setMode('remove');
+            return;
+          }
+          if (item.value === 'save') {
+            await onSave(currentLines);
+            return;
+          }
           onBack();
         }}
       />

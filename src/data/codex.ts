@@ -15,10 +15,7 @@ function getCodexDir(): string {
 
 async function findHistoryFile(): Promise<string | null> {
   const base = getCodexDir();
-  const candidates = [
-    path.join(base, 'history.jsonl'),
-    path.join(base, 'sessions'),
-  ];
+  const candidates = [path.join(base, 'history.jsonl'), path.join(base, 'sessions')];
   for (const c of candidates) {
     try {
       await fs.promises.access(c);

@@ -18,6 +18,7 @@ module.exports = {
     'airbnb',
     'airbnb/hooks',
     'airbnb-typescript',
+    'prettier',
   ],
   rules: {
     // ESM imports include .js extensions — allow them

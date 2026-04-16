@@ -8,7 +8,9 @@ import { setLocale, type Locale } from './i18n/index.js';
 async function main(): Promise<void> {
   const settings = await loadSettings();
   const envLocale = process.env.FESTATUSLINE_LOCALE as Locale | undefined;
-  setLocale(envLocale && ['ko', 'en', 'zh'].includes(envLocale) ? envLocale : (settings.locale as Locale));
+  setLocale(
+    envLocale && ['ko', 'en', 'zh'].includes(envLocale) ? envLocale : (settings.locale as Locale),
+  );
 
   const [, , sub] = process.argv;
 

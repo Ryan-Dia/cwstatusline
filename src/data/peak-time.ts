@@ -5,21 +5,19 @@ export interface PeakTimeResult {
   label: string;
 }
 
-export function computePeakTime(
-  entries: UsageEntry[],
-  windowDays = 14,
-): PeakTimeResult | null {
+export function computePeakTime(entries: UsageEntry[], windowDays = 14): PeakTimeResult | null {
   const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1000;
   const buckets = new Array<number>(24).fill(0);
 
   for (const e of entries) {
     if (e.timestamp < cutoff) continue;
     const hour = new Date(e.timestamp).getHours();
-    buckets[hour] = (buckets[hour] ?? 0)
-      + e.inputTokens
-      + e.outputTokens
-      + e.cacheCreationTokens
-      + e.cacheReadTokens;
+    buckets[hour] =
+      (buckets[hour] ?? 0) +
+      e.inputTokens +
+      e.outputTokens +
+      e.cacheCreationTokens +
+      e.cacheReadTokens;
   }
 
   let maxTokens = 0;

@@ -19,6 +19,10 @@ export async function runDoctor(): Promise<void> {
   const claudeOk = await exists(claudeDir);
   const codexOk = await exists(codexDir);
 
-  process.stdout.write(`${t('doctor.claudeDir')}: ${claudeDir} — ${claudeOk ? t('doctor.found') : t('doctor.notFound')}\n`);
-  process.stdout.write(`${t('doctor.codexDir')}: ${codexDir} — ${codexOk ? t('doctor.found') : t('doctor.notFound')}\n`);
+  process.stdout.write(
+    `${t('doctor.claudeDir')}: ${claudeDir} — ${claudeOk ? t('doctor.found') : t('doctor.notFound')}\n`,
+  );
+  process.stdout.write(
+    `${t('doctor.codexDir')}: ${codexDir} — ${codexOk ? t('doctor.found') : t('doctor.notFound')}\n`,
+  );
 }

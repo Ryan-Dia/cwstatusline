@@ -23,10 +23,7 @@ export function getDailyReset(now: Date = new Date()): ResetTimer {
   return { remainingMs, label: formatDuration(remainingMs) };
 }
 
-export function getWeeklyReset(
-  anchorDay: number | null,
-  now: Date = new Date(),
-): ResetTimer {
+export function getWeeklyReset(anchorDay: number | null, now: Date = new Date()): ResetTimer {
   let targetMs: number;
 
   if (anchorDay !== null) {

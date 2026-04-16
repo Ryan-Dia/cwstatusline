@@ -2,9 +2,7 @@ import type { Settings } from './schema.js';
 
 export const PRESETS: Record<string, Partial<Settings>> = {
   minimal: {
-    lines: [
-      [{ id: 'model' }, { id: 'context' }, { id: 'dailyUsage' }],
-    ],
+    lines: [[{ id: 'model' }, { id: 'context' }, { id: 'dailyUsage' }]],
   },
   full: {
     lines: [
@@ -40,9 +38,7 @@ export const PRESETS: Record<string, Partial<Settings>> = {
     ],
   },
   'multi-cli': {
-    lines: [
-      [{ id: 'model' }, { id: 'dailyUsage' }, { id: 'gptUsage' }],
-    ],
+    lines: [[{ id: 'model' }, { id: 'dailyUsage' }, { id: 'gptUsage' }]],
   },
 };
 
