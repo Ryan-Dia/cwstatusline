@@ -1,6 +1,7 @@
 import { readStdin } from '../data/stdin.js';
 import { getUsageSnapshot } from '../data/usage.js';
 import { getCodexSnapshot } from '../data/codex.js';
+import { readClaudeSettings } from '../data/claude-settings.js';
 import { loadSettings } from '../config/load.js';
 import { getTheme } from '../theme/index.js';
 import { t, setLocale, type Locale } from '../i18n/index.js';
@@ -8,7 +9,11 @@ import { renderAllLines } from './line.js';
 import type { RenderContext } from '../widgets/types.js';
 
 export async function renderFromStdin(): Promise<void> {
-  const [stdin, settings] = await Promise.all([readStdin(), loadSettings()]);
+  const [stdin, settings, claudeSettings] = await Promise.all([
+    readStdin(),
+    loadSettings(),
+    readClaudeSettings(),
+  ]);
 
   setLocale(settings.locale as Locale);
 
@@ -26,6 +31,7 @@ export async function renderFromStdin(): Promise<void> {
     t,
     now: new Date(),
     weeklyAnchorDay: settings.weeklyAnchorDay,
+    effortLevel: claudeSettings.effortLevel,
   };
 
   const output = renderAllLines(settings.lines, ctx, settings.separator);

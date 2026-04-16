@@ -12,6 +12,7 @@ export interface RenderContext {
   t: (key: I18nKey) => string;
   now: Date;
   weeklyAnchorDay: number | null;
+  effortLevel?: string;
 }
 
 export interface WidgetConfig {

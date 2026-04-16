@@ -4,33 +4,64 @@ const ModelSchema = z.object({
   id: z.string(),
   display_name: z.string().optional(),
   max_output_tokens: z.number().optional(),
-  context_window: z.number().optional(),
 });
 
-const UsageSchema = z.object({
+const ContextWindowCurrentUsageSchema = z.object({
   input_tokens: z.number().optional(),
   output_tokens: z.number().optional(),
   cache_creation_input_tokens: z.number().optional(),
   cache_read_input_tokens: z.number().optional(),
 });
 
+const ContextWindowSchema = z.object({
+  total_input_tokens: z.number().optional(),
+  total_output_tokens: z.number().optional(),
+  context_window_size: z.number().optional(),
+  current_usage: ContextWindowCurrentUsageSchema.optional(),
+  used_percentage: z.number().optional(),
+  remaining_percentage: z.number().optional(),
+});
+
+const RateLimitPeriodSchema = z.object({
+  used_percentage: z.number().optional(),
+  resets_at: z.number().optional(),
+});
+
+const RateLimitsSchema = z.object({
+  five_hour: RateLimitPeriodSchema.optional(),
+  seven_day: RateLimitPeriodSchema.optional(),
+});
+
 const CostSchema = z.object({
   total_cost_usd: z.number().optional(),
+  total_duration_ms: z.number().optional(),
+  total_api_duration_ms: z.number().optional(),
 });
 
 const WorkspaceSchema = z.object({
   current_dir: z.string().optional(),
+  project_dir: z.string().optional(),
+});
+
+const OutputStyleSchema = z.object({
+  name: z.string().optional(),
 });
 
 const ClaudeStdinSchema = z.object({
   type: z.string().optional(),
   model: ModelSchema.optional(),
   session_id: z.string().optional(),
+  session_name: z.string().optional(),
   transcript_path: z.string().optional(),
+  cwd: z.string().optional(),
   cost: CostSchema.optional(),
-  usage: UsageSchema.optional(),
+  context_window: ContextWindowSchema.optional(),
   workspace: WorkspaceSchema.optional(),
   hook_event_name: z.string().optional(),
+  version: z.string().optional(),
+  output_style: OutputStyleSchema.optional(),
+  rate_limits: RateLimitsSchema.optional(),
+  exceeds_200k_tokens: z.boolean().optional(),
 });
 
 export type ClaudeStdin = z.infer<typeof ClaudeStdinSchema>;
