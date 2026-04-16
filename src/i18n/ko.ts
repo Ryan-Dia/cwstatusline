@@ -10,6 +10,7 @@ export const ko = {
   'widget.sonnetWeeklyReset': '소넷 주간 초기화',
   'widget.gptUsage': 'GPT 사용량',
   'widget.rateLimit': '5시간 할당량',
+  'widget.weeklyRateLimit': '7일 할당량',
   'reset.until': '까지',
   'reset.na': '–',
   'usage.tokens': '토큰',

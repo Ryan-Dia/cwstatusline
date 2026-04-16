@@ -2,7 +2,15 @@ import type { Settings } from './schema.js';
 
 export const PRESETS: Record<string, Partial<Settings>> = {
   minimal: {
-    lines: [[{ id: 'model' }, { id: 'context' }, { id: 'rateLimit' }, { id: 'dailyUsage' }]],
+    lines: [
+      [
+        { id: 'model' },
+        { id: 'context' },
+        { id: 'rateLimit' },
+        { id: 'weeklyRateLimit' },
+        { id: 'dailyUsage' },
+      ],
+    ],
   },
   full: {
     lines: [

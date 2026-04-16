@@ -12,6 +12,7 @@ export const en: Record<I18nKey, string> = {
   'widget.sonnetWeeklyReset': 'Sonnet Weekly Reset',
   'widget.gptUsage': 'GPT Usage',
   'widget.rateLimit': '5h Limit',
+  'widget.weeklyRateLimit': '7d Limit',
   'reset.until': 'until reset',
   'reset.na': '–',
   'usage.tokens': 'tokens',

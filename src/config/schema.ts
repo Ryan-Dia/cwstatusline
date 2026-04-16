@@ -8,7 +8,15 @@ export const WidgetConfigSchema = z.object({
 export const SettingsSchema = z.object({
   lines: z
     .array(z.array(WidgetConfigSchema))
-    .default([[{ id: 'model' }, { id: 'context' }, { id: 'rateLimit' }, { id: 'dailyUsage' }]]),
+    .default([
+      [
+        { id: 'model' },
+        { id: 'context' },
+        { id: 'rateLimit' },
+        { id: 'weeklyRateLimit' },
+        { id: 'dailyUsage' },
+      ],
+    ]),
   theme: z.string().default('default'),
   locale: z.enum(['ko', 'en', 'zh']).default('en'),
   weeklyAnchorDay: z.number().min(0).max(6).nullable().default(null),
