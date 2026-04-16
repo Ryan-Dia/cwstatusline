@@ -1,8 +1,14 @@
 import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
-function buildBar(pct: number, width = 8): string {
-  const filled = Math.round((pct / 100) * width);
-  return '█'.repeat(filled) + '░'.repeat(width - filled);
+const BAR_WIDTH = 10;
+
+function buildBar(pct: number): string {
+  const filled = Math.round((pct / 100) * BAR_WIDTH);
+  return '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled);
+}
+
+function fmtPct(pct: number): string {
+  return `${String(pct).padStart(3)}%`;
 }
 
 function formatRemaining(seconds: number): string {
@@ -27,8 +33,7 @@ export const RateLimitWidget: Widget = {
 
     const pct = Math.round(fiveHour.used_percentage);
     const remainingSec = fiveHour.resets_at - ctx.now.getTime() / 1000;
-    const bar = buildBar(pct);
-    return `5h ${bar} ${pct}% (${formatRemaining(remainingSec)})`;
+    return `5h ${buildBar(pct)} ${fmtPct(pct)} (${formatRemaining(remainingSec)})`;
   },
 };
 
@@ -41,7 +46,6 @@ export const WeeklyRateLimitWidget: Widget = {
 
     const pct = Math.round(sevenDay.used_percentage);
     const remainingSec = sevenDay.resets_at - ctx.now.getTime() / 1000;
-    const bar = buildBar(pct);
-    return `7d ${bar} ${pct}% (${formatRemaining(remainingSec)})`;
+    return `All ${buildBar(pct)} ${fmtPct(pct)} (${formatRemaining(remainingSec)})`;
   },
 };

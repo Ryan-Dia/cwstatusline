@@ -1,8 +1,10 @@
 import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
-function buildBar(pct: number, width = 10): string {
-  const filled = Math.round((pct / 100) * width);
-  return '█'.repeat(filled) + '░'.repeat(width - filled);
+const BAR_WIDTH = 10;
+
+function buildBar(pct: number): string {
+  const filled = Math.round((pct / 100) * BAR_WIDTH);
+  return '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled);
 }
 
 function formatTokens(n: number): string {
@@ -30,6 +32,6 @@ export const ContextWidget: Widget = {
     const bar = buildBar(pct);
     const usedStr = formatTokens(used);
     const maxStr = formatTokens(max);
-    return `Ctx ${bar} ${usedStr}/${maxStr}`;
+    return `Ctx ${bar} ${String(pct).padStart(3)}% (${usedStr}/${maxStr})`;
   },
 };
