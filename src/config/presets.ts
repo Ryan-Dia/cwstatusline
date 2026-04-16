@@ -1,47 +1,47 @@
-import type { Settings } from "./schema.js";
+import type { Settings } from './schema.js';
 
 export const PRESETS: Record<string, Partial<Settings>> = {
   minimal: {
     lines: [
-      [{ id: "model" }, { id: "context" }, { id: "dailyUsage" }],
+      [{ id: 'model' }, { id: 'context' }, { id: 'dailyUsage' }],
     ],
   },
   full: {
     lines: [
       [
-        { id: "model" },
-        { id: "context" },
-        { id: "peakTime" },
-        { id: "dailyUsage" },
-        { id: "dailyReset" },
-        { id: "weeklyUsage" },
-        { id: "weeklyReset" },
-        { id: "sonnetWeeklyUsage" },
-        { id: "sonnetWeeklyReset" },
-        { id: "gptUsage" },
+        { id: 'model' },
+        { id: 'context' },
+        { id: 'peakTime' },
+        { id: 'dailyUsage' },
+        { id: 'dailyReset' },
+        { id: 'weeklyUsage' },
+        { id: 'weeklyReset' },
+        { id: 'sonnetWeeklyUsage' },
+        { id: 'sonnetWeeklyReset' },
+        { id: 'gptUsage' },
       ],
     ],
   },
-  "korean-dev": {
-    locale: "ko",
+  'korean-dev': {
+    locale: 'ko',
     lines: [
       [
-        { id: "model" },
-        { id: "context" },
-        { id: "peakTime" },
-        { id: "dailyUsage" },
-        { id: "dailyReset" },
-        { id: "weeklyUsage" },
-        { id: "weeklyReset" },
-        { id: "sonnetWeeklyUsage" },
-        { id: "sonnetWeeklyReset" },
-        { id: "gptUsage" },
+        { id: 'model' },
+        { id: 'context' },
+        { id: 'peakTime' },
+        { id: 'dailyUsage' },
+        { id: 'dailyReset' },
+        { id: 'weeklyUsage' },
+        { id: 'weeklyReset' },
+        { id: 'sonnetWeeklyUsage' },
+        { id: 'sonnetWeeklyReset' },
+        { id: 'gptUsage' },
       ],
     ],
   },
-  "multi-cli": {
+  'multi-cli': {
     lines: [
-      [{ id: "model" }, { id: "dailyUsage" }, { id: "gptUsage" }],
+      [{ id: 'model' }, { id: 'dailyUsage' }, { id: 'gptUsage' }],
     ],
   },
 };
