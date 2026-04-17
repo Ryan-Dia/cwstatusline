@@ -3,10 +3,23 @@ import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
 const BAR_WIDTH = 10;
 
+function dimColor(hex: string): string {
+  const r = Math.round(parseInt(hex.slice(1, 3), 16) * 0.35)
+    .toString(16)
+    .padStart(2, '0');
+  const g = Math.round(parseInt(hex.slice(3, 5), 16) * 0.35)
+    .toString(16)
+    .padStart(2, '0');
+  const b = Math.round(parseInt(hex.slice(5, 7), 16) * 0.35)
+    .toString(16)
+    .padStart(2, '0');
+  return `#${r}${g}${b}`;
+}
+
 function buildBar(pct: number, color: string): string {
   const filled = Math.round((pct / 100) * BAR_WIDTH);
-  const filledStr = chalk.hex(color)('▬'.repeat(filled));
-  const emptyStr = chalk.hex('#444444')('▬'.repeat(BAR_WIDTH - filled));
+  const filledStr = chalk.hex(color)('■'.repeat(filled));
+  const emptyStr = chalk.hex(dimColor(color))('■'.repeat(BAR_WIDTH - filled));
   return filledStr + emptyStr;
 }
 
@@ -32,7 +45,7 @@ export const ContextWidget: Widget = {
     const max = cw.context_window_size;
     const pct = cw.used_percentage ?? Math.min(100, Math.round((used / max) * 100));
 
-    const bar = buildBar(pct, '#ff6b6b');
+    const bar = buildBar(pct, '#22d3ee');
     const usedStr = formatTokens(used);
     const maxStr = formatTokens(max);
     return `Ctx ${bar} ${String(pct).padStart(3)}% (${usedStr}/${maxStr})`;
