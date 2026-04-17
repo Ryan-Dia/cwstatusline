@@ -1,3 +1,6 @@
+import { promises as fs } from 'fs';
+import { homedir } from 'os';
+import { dirname, join } from 'path';
 import { readStdin } from '../data/stdin.js';
 import { getUsageSnapshot } from '../data/usage.js';
 import { getCodexSnapshot } from '../data/codex.js';
@@ -7,6 +10,20 @@ import { getTheme } from '../theme/index.js';
 import { t, setLocale, type Locale } from '../i18n/index.js';
 import { renderAllLines } from './line.js';
 import type { RenderContext } from '../widgets/types.js';
+
+const CACHE_DIR = process.env.XDG_CACHE_HOME
+  ? join(process.env.XDG_CACHE_HOME, 'festatusline')
+  : join(homedir(), '.cache', 'festatusline');
+const CACHE_PATH = join(CACHE_DIR, 'last.txt');
+
+async function readCache(): Promise<string> {
+  return fs.readFile(CACHE_PATH, 'utf8').catch(() => '');
+}
+
+async function writeCache(output: string): Promise<void> {
+  await fs.mkdir(dirname(CACHE_PATH), { recursive: true }).catch(() => {});
+  await fs.writeFile(CACHE_PATH, output, 'utf8').catch(() => {});
+}
 
 export async function renderFromStdin(): Promise<void> {
   const [stdin, settings, claudeSettings] = await Promise.all([
@@ -36,6 +53,12 @@ export async function renderFromStdin(): Promise<void> {
 
   const output = renderAllLines(settings.lines, ctx, settings.separator);
   if (output) {
+    await writeCache(output);
     process.stdout.write(`${output}\n`);
+  } else {
+    const cached = await readCache();
+    if (cached) {
+      process.stdout.write(`${cached}\n`);
+    }
   }
 }
