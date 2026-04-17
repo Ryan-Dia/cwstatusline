@@ -9,6 +9,8 @@ export const ko = {
   'widget.sonnetWeeklyUsage': '소넷 주간 사용량',
   'widget.sonnetWeeklyReset': '소넷 주간 초기화',
   'widget.gptUsage': 'GPT 사용량',
+  'widget.codexRateLimit': 'Codex 5h 한도',
+  'widget.codexWeeklyRateLimit': 'Codex 7일 한도',
   'widget.rateLimit': '5시간 할당량',
   'widget.weeklyRateLimit': '7일 할당량',
   'widget.claudePeak': '클로드 피크',

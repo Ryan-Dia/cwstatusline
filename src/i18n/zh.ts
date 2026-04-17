@@ -11,6 +11,8 @@ export const zh: Record<I18nKey, string> = {
   'widget.sonnetWeeklyUsage': 'Sonnet 周用量',
   'widget.sonnetWeeklyReset': 'Sonnet 周重置',
   'widget.gptUsage': 'GPT 用量',
+  'widget.codexRateLimit': 'Codex 5小时限额',
+  'widget.codexWeeklyRateLimit': 'Codex 7天限额',
   'widget.rateLimit': '5小时限额',
   'widget.weeklyRateLimit': '7天限额',
   'widget.claudePeak': 'Claude高峰',

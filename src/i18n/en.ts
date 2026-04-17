@@ -11,6 +11,8 @@ export const en: Record<I18nKey, string> = {
   'widget.sonnetWeeklyUsage': 'Sonnet Weekly',
   'widget.sonnetWeeklyReset': 'Sonnet Weekly Reset',
   'widget.gptUsage': 'GPT Usage',
+  'widget.codexRateLimit': 'Codex 5h Limit',
+  'widget.codexWeeklyRateLimit': 'Codex 7d Limit',
   'widget.rateLimit': '5h Limit',
   'widget.weeklyRateLimit': '7d Limit',
   'widget.claudePeak': 'Claude Peak',

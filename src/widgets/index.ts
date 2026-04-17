@@ -11,6 +11,7 @@ import { SonnetWeeklyResetTimerWidget } from './SonnetWeeklyResetTimer.js';
 import { GptUsageWidget } from './GptUsage.js';
 import { RateLimitWidget, WeeklyRateLimitWidget } from './RateLimit.js';
 import { ClaudePeakWidget } from './ClaudePeak.js';
+import { CodexRateLimitWidget, CodexWeeklyRateLimitWidget } from './CodexRateLimit.js';
 
 export const ALL_WIDGETS: Widget[] = [
   ModelWidget,
@@ -26,6 +27,8 @@ export const ALL_WIDGETS: Widget[] = [
   SonnetWeeklyResetTimerWidget,
   GptUsageWidget,
   ClaudePeakWidget,
+  CodexRateLimitWidget,
+  CodexWeeklyRateLimitWidget,
 ];
 
 const registry = new Map<string, Widget>(ALL_WIDGETS.map((w) => [w.id, w]));
