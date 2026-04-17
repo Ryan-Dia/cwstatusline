@@ -26,18 +26,15 @@ async function writeCache(output: string): Promise<void> {
 }
 
 export async function renderFromStdin(): Promise<void> {
-  const [stdin, settings, claudeSettings] = await Promise.all([
+  const [stdin, settings, claudeSettings, usage, codex] = await Promise.all([
     readStdin(),
     loadSettings(),
     readClaudeSettings(),
-  ]);
-
-  setLocale(settings.locale as Locale);
-
-  const [usage, codex] = await Promise.all([
     getUsageSnapshot().catch(() => null),
     getCodexSnapshot().catch(() => null),
   ]);
+
+  setLocale(settings.locale as Locale);
 
   const theme = getTheme(settings.theme);
   const ctx: RenderContext = {
