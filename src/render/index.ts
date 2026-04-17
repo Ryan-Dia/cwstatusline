@@ -38,6 +38,15 @@ async function writeRateLimitsCache(rateLimits: RateLimitsCache): Promise<void> 
   await fs.writeFile(RATE_LIMITS_CACHE_PATH, JSON.stringify(rateLimits), 'utf8').catch(() => {});
 }
 
+async function readCache(): Promise<string | null> {
+  try {
+    const content = await fs.readFile(CACHE_PATH, 'utf8');
+    return content.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function renderFromStdin(): Promise<void> {
   const [stdin, settings, claudeSettings, usage, codex, cachedRateLimits] = await Promise.all([
     readStdin(),
@@ -52,6 +61,16 @@ export async function renderFromStdin(): Promise<void> {
 
   if (stdin.rate_limits) {
     writeRateLimitsCache(stdin.rate_limits).catch(() => {});
+  }
+
+  // /clear and startup events have no context_window — serve the last rich
+  // render from cache so widgets don't flash '?' placeholders.
+  if (!stdin.context_window) {
+    const cached = await readCache();
+    if (cached) {
+      process.stdout.write(`${cached}\n`);
+      return;
+    }
   }
 
   const theme = getTheme(settings.theme);
@@ -71,9 +90,6 @@ export async function renderFromStdin(): Promise<void> {
 
   const output = renderAllLines(settings.lines, ctx, settings.separator);
 
-  // Output always (widgets render placeholders when data is absent).
-  // Update the cache only when we have real API session data (context_window
-  // present), so /clear and startup events don't overwrite the last rich cache.
   if (stdin.context_window) {
     await writeCache(output);
   }
