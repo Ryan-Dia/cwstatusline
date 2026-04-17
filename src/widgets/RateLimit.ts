@@ -1,10 +1,13 @@
+import chalk from 'chalk';
 import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
 const BAR_WIDTH = 10;
 
-function buildBar(pct: number): string {
+function buildBar(pct: number, color: string): string {
   const filled = Math.round((pct / 100) * BAR_WIDTH);
-  return '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled);
+  const filledStr = chalk.hex(color)('▬'.repeat(filled));
+  const emptyStr = chalk.hex('#444444')('▬'.repeat(BAR_WIDTH - filled));
+  return filledStr + emptyStr;
 }
 
 function fmtPct(pct: number): string {
@@ -33,7 +36,7 @@ export const RateLimitWidget: Widget = {
 
     const pct = Math.round(fiveHour.used_percentage);
     const remainingSec = fiveHour.resets_at - ctx.now.getTime() / 1000;
-    return `5h ${buildBar(pct)} ${fmtPct(pct)} (${formatRemaining(remainingSec)})`;
+    return `5h ${buildBar(pct, '#ffd93d')} ${fmtPct(pct)} (${formatRemaining(remainingSec)})`;
   },
 };
 
@@ -46,6 +49,6 @@ export const WeeklyRateLimitWidget: Widget = {
 
     const pct = Math.round(sevenDay.used_percentage);
     const remainingSec = sevenDay.resets_at - ctx.now.getTime() / 1000;
-    return `All ${buildBar(pct)} ${fmtPct(pct)} (${formatRemaining(remainingSec)})`;
+    return `All ${buildBar(pct, '#6bcb77')} ${fmtPct(pct)} (${formatRemaining(remainingSec)})`;
   },
 };

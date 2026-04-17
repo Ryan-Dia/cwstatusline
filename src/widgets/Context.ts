@@ -1,10 +1,13 @@
+import chalk from 'chalk';
 import type { Widget, RenderContext, WidgetConfig } from './types.js';
 
 const BAR_WIDTH = 10;
 
-function buildBar(pct: number): string {
+function buildBar(pct: number, color: string): string {
   const filled = Math.round((pct / 100) * BAR_WIDTH);
-  return '█'.repeat(filled) + '░'.repeat(BAR_WIDTH - filled);
+  const filledStr = chalk.hex(color)('▬'.repeat(filled));
+  const emptyStr = chalk.hex('#444444')('▬'.repeat(BAR_WIDTH - filled));
+  return filledStr + emptyStr;
 }
 
 function formatTokens(n: number): string {
@@ -29,7 +32,7 @@ export const ContextWidget: Widget = {
     const max = cw.context_window_size;
     const pct = cw.used_percentage ?? Math.min(100, Math.round((used / max) * 100));
 
-    const bar = buildBar(pct);
+    const bar = buildBar(pct, '#ff6b6b');
     const usedStr = formatTokens(used);
     const maxStr = formatTokens(max);
     return `Ctx ${bar} ${String(pct).padStart(3)}% (${usedStr}/${maxStr})`;
