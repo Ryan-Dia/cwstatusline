@@ -14,16 +14,19 @@ interface CodexRateLimitParams {
   color: string;
   period: Period;
   timeFormat: TimeFormat;
+  prefixWidth?: number;
+  timeExprWidth?: number;
 }
 
 function createCodexRateLimitWidget(params: CodexRateLimitParams): Widget {
-  const { id, labelKey, prefix, color, period, timeFormat } = params;
+  const { id, labelKey, prefix, color, period, timeFormat, prefixWidth, timeExprWidth } = params;
   return {
     id,
     labelKey,
     render(ctx: RenderContext, _cfg: WidgetConfig): string | null {
       const slot = ctx.codex?.rateLimits?.[period];
-      if (!slot) return `GPT ${prefix} ${buildBar(0, color)} ?%`;
+      const paddedPrefix = prefixWidth != null ? prefix.padEnd(prefixWidth) : prefix;
+      if (!slot) return `${paddedPrefix} ${buildBar(0, color)} ?%`;
 
       const remainingMs = slot.resetsAt * 1000 - ctx.now.getTime();
       const pct = remainingMs <= 0 ? 0 : Math.round(slot.usedPercent);
@@ -36,7 +39,9 @@ function createCodexRateLimitWidget(params: CodexRateLimitParams): Widget {
         timeStr = formatRemainingHM(remainingMs);
       }
 
-      return `GPT ${prefix} ${buildBar(pct, color)} ${fmtPct(pct)} (${timeStr})`;
+      const timeExpr =
+        timeExprWidth != null ? `(${timeStr})`.padEnd(timeExprWidth) : `(${timeStr})`;
+      return `${paddedPrefix} ${buildBar(pct, color)} ${fmtPct(pct)} ${timeExpr}`;
     },
   };
 }
@@ -48,12 +53,14 @@ export const CodexRateLimitWidget: Widget = createCodexRateLimitWidget({
   color: '#ff9f43',
   period: 'primary',
   timeFormat: 'remaining',
+  prefixWidth: 3,
+  timeExprWidth: 11,
 });
 
 export const CodexWeeklyRateLimitWidget: Widget = createCodexRateLimitWidget({
   id: 'codexWeeklyRateLimit',
   labelKey: 'widget.codexWeeklyRateLimit',
-  prefix: '7days',
+  prefix: '7d',
   color: '#48dbfb',
   period: 'secondary',
   timeFormat: 'abs',

@@ -12,6 +12,8 @@ import { GptUsageWidget } from './GptUsage.js';
 import { RateLimitWidget, WeeklyRateLimitWidget } from './RateLimit.js';
 import { ClaudePeakWidget } from './ClaudePeak.js';
 import { CodexRateLimitWidget, CodexWeeklyRateLimitWidget } from './CodexRateLimit.js';
+import { SpacerWidget } from './Spacer.js';
+import { CodexModelWidget } from './CodexModel.js';
 
 export const ALL_WIDGETS: Widget[] = [
   ModelWidget,
@@ -29,6 +31,8 @@ export const ALL_WIDGETS: Widget[] = [
   ClaudePeakWidget,
   CodexRateLimitWidget,
   CodexWeeklyRateLimitWidget,
+  SpacerWidget,
+  CodexModelWidget,
 ];
 
 const registry = new Map<string, Widget>(ALL_WIDGETS.map((w) => [w.id, w]));

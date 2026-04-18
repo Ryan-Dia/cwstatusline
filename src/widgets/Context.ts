@@ -18,6 +18,7 @@ export const ContextWidget: Widget = {
     const max = cw.context_window_size;
     const pct = Math.round(cw.used_percentage ?? Math.min(100, (used / max) * 100));
 
-    return `Ctx ${buildBar(pct, '#22d3ee')} ${fmtPct(pct)} (${formatTokens(used)}/${formatTokens(max)})`;
+    const tokenExpr = `(${formatTokens(used)}/${formatTokens(max)})`.padEnd(11);
+    return `Ctx ${buildBar(pct, '#22d3ee')} ${fmtPct(pct)} ${tokenExpr}`;
   },
 };

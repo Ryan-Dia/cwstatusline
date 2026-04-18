@@ -13,10 +13,21 @@ export interface CodexSnapshot {
   dailyRequests: number;
   weeklyRequests: number;
   rateLimits: CodexRateLimits | null;
+  model: string | null;
 }
 
 function getCodexDir(): string {
   return process.env.CODEX_CONFIG_DIR ?? path.join(os.homedir(), '.codex');
+}
+
+async function readCodexModel(): Promise<string | null> {
+  try {
+    const raw = await fs.promises.readFile(path.join(getCodexDir(), 'config.toml'), 'utf8');
+    const match = raw.match(/^model\s*=\s*"([^"]+)"/m);
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function findHistoryFile(): Promise<string | null> {
@@ -96,17 +107,18 @@ async function readLastRateLimits(filePath: string): Promise<CodexRateLimits | n
 export async function getCodexSnapshot(): Promise<CodexSnapshot> {
   const histPath = await findHistoryFile();
   if (!histPath) {
-    return { available: false, dailyRequests: 0, weeklyRequests: 0, rateLimits: null };
+    return { available: false, dailyRequests: 0, weeklyRequests: 0, rateLimits: null, model: null };
   }
 
-  const [stat, latestSession] = await Promise.all([
+  const [stat, latestSession, model] = await Promise.all([
     fs.promises.stat(histPath),
     findLatestSessionFile(),
+    readCodexModel(),
   ]);
   const rateLimits = latestSession ? await readLastRateLimits(latestSession) : null;
 
   if (stat.isDirectory()) {
-    return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits };
+    return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
   }
 
   const now = Date.now();
@@ -133,5 +145,5 @@ export async function getCodexSnapshot(): Promise<CodexSnapshot> {
     }
   }
 
-  return { available: true, dailyRequests: daily, weeklyRequests: weekly, rateLimits };
+  return { available: true, dailyRequests: daily, weeklyRequests: weekly, rateLimits, model };
 }

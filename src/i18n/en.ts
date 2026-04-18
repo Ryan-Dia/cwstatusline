@@ -13,6 +13,8 @@ export const en: Record<I18nKey, string> = {
   'widget.gptUsage': 'GPT Usage',
   'widget.codexRateLimit': 'Codex 5h Limit',
   'widget.codexWeeklyRateLimit': 'Codex 7d Limit',
+  'widget.spacer': 'Spacer',
+  'widget.codexModel': 'Codex Model',
   'widget.rateLimit': '5h Limit',
   'widget.weeklyRateLimit': '7d Limit',
   'widget.claudePeak': 'Claude Peak',
