@@ -11,7 +11,7 @@ Configure the festatusline status line plugin.
 ## Arguments
 
 - **No arguments**: Interactive mode (asks questions)
-- `$1`: Preset name — `minimal` (default), `full`, `korean-dev`, `multi-cli`
+- `$1`: Preset name — `lite` (default), `plus`, `pro`
 - `$2`: Locale — `ko`, `en` (default), `zh`
 
 ## Available Widgets
@@ -29,8 +29,17 @@ Configure the festatusline status line plugin.
 | `sonnetWeeklyReset` | Time until Sonnet weekly reset |
 | `gptUsage` | Today's Codex CLI request count |
 | `rateLimit` | Current rate limit status |
-| `claudePeak` | Claude usage peak indicator |
 | `weeklyRateLimit` | Weekly rate limit status |
+| `claudePeak` | Claude usage peak indicator |
+| `cacheHit` | Prompt cache hit rate |
+| `cacheTtl` | Cache TTL remaining time |
+| `sessionCost` | Estimated session cost |
+| `gitRepo` | Current git repository name |
+| `gitBranch` | Current git branch name |
+| `codexModel` | Codex CLI model name |
+| `codexRateLimit` | Codex daily rate limit status |
+| `codexWeeklyRateLimit` | Codex weekly rate limit status |
+| `spacer` | Empty separator line |
 
 ## Available Themes
 
@@ -43,56 +52,77 @@ Configure the festatusline status line plugin.
 **If no arguments provided (interactive mode):**
 
 Ask all questions in a single AskUserQuestion call:
-1. Preset — options with descriptions:
-   - `minimal` (recommended): 3-line layout with daily/weekly usage, context, rate limits, model
-   - `full`: All widgets in one line
-   - `korean-dev`: Korean locale + all widgets
-   - `multi-cli`: Model + daily usage + Codex CLI usage
+1. Preset — options with descriptions and multi-line previews showing the exact layout:
+   - `lite` (3 lines): Daily/context/rateLimit + 7days + model line
+     preview (use actual newlines \n between lines):
+     ```
+     Daily  │ Ctx ████  31% (63K/200K) │ 5h ████  75%
+     7days  │ All █      6% (6d 21h)
+     Sonnet 4.6 [high] │ 🔴 Peak │ my-repo │ main
+     ```
+   - `plus` (5 lines, recommended): lite + spacer + cache/cost line
+     preview:
+     ```
+     Daily  │ Ctx ████  31% (63K/200K) │ 5h ████  75%
+     7days  │ All █      6% (6d 21h)
+
+     ⚡100% │ ⏰ 1h 0m │ $1.56
+     Sonnet 4.6 [high] │ 🔴 Peak │ my-repo │ main
+     ```
+   - `pro` (6 lines): plus + Codex CLI line
+     preview:
+     ```
+     Daily  │ Ctx ████  31% (63K/200K) │ 5h ████  75%
+     7days  │ All █      6% (6d 21h)
+     gpt-5.4│ 5h  ████   0% (reset)   │ 7d ████   0%
+
+     ⚡100% │ ⏰ 1h 0m │ $1.56
+     Sonnet 4.6 [high] │ 🔴 Peak │ my-repo │ main
+     ```
 2. Theme — `default` (recommended), `dracula`, `nord`, `gruvbox`, `tokyo-night`
-3. Locale — `en` (default), `ko`, `zh`
+3. Locale — `ko` (recommended), `en`, `zh`
 
 **If arguments provided:**
-Use `$1` as preset (default: `minimal`) and `$2` as locale (default: `en`).
+Use `$1` as preset (default: `lite`) and `$2` as locale (default: `en`).
 
 ### 2. Build settings JSON
 
 Map the chosen preset to the `lines` array:
 
-**minimal:**
+**lite:**
 ```json
 {
   "lines": [
     [{"id":"dailyUsage"},{"id":"context"},{"id":"rateLimit"}],
     [{"id":"weeklyUsage"},{"id":"weeklyRateLimit"}],
-    [{"id":"model"},{"id":"claudePeak"}]
+    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"},{"id":"gitBranch"}]
   ]
 }
 ```
 
-**full:**
+**plus:**
 ```json
 {
   "lines": [
-    [{"id":"model"},{"id":"claudePeak"},{"id":"context"},{"id":"rateLimit"},{"id":"peakTime"},{"id":"dailyUsage"},{"id":"dailyReset"},{"id":"weeklyUsage"},{"id":"weeklyReset"},{"id":"sonnetWeeklyUsage"},{"id":"sonnetWeeklyReset"},{"id":"gptUsage"}]
+    [{"id":"dailyUsage"},{"id":"context"},{"id":"rateLimit"}],
+    [{"id":"weeklyUsage"},{"id":"weeklyRateLimit"}],
+    [{"id":"spacer"}],
+    [{"id":"cacheHit"},{"id":"cacheTtl"},{"id":"sessionCost"}],
+    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"},{"id":"gitBranch"}]
   ]
 }
 ```
 
-**korean-dev:**
+**pro:**
 ```json
 {
   "lines": [
-    [{"id":"model"},{"id":"claudePeak"},{"id":"context"},{"id":"rateLimit"},{"id":"peakTime"},{"id":"dailyUsage"},{"id":"dailyReset"},{"id":"weeklyUsage"},{"id":"weeklyReset"},{"id":"sonnetWeeklyUsage"},{"id":"sonnetWeeklyReset"},{"id":"gptUsage"}]
-  ],
-  "locale": "ko"
-}
-```
-
-**multi-cli:**
-```json
-{
-  "lines": [
-    [{"id":"model"},{"id":"dailyUsage"},{"id":"gptUsage"}]
+    [{"id":"dailyUsage"},{"id":"context"},{"id":"rateLimit"}],
+    [{"id":"weeklyUsage"},{"id":"weeklyRateLimit"}],
+    [{"id":"codexModel"},{"id":"codexRateLimit"},{"id":"codexWeeklyRateLimit"}],
+    [{"id":"spacer"}],
+    [{"id":"cacheHit"},{"id":"cacheTtl"},{"id":"sessionCost"}],
+    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"},{"id":"gitBranch"}]
   ]
 }
 ```
@@ -110,7 +140,7 @@ Write the complete settings object with `lines`, `theme`, `locale`, `separator` 
 
 Find the latest plugin path and register it:
 ```bash
-jq --arg path "$(ls -d ~/.claude/plugins/cache/festatusline/festatusline/*/dist/cli.js 2>/dev/null | sort -V | tail -1)" '.statusLine = {"type": "command", "command": ("node " + $path)}' ~/.claude/settings.json > ~/.claude/settings.json.tmp && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
+jq --arg path "$(ls -d ~/.claude/plugins/cache/festatusline/festatusline/*/dist/cli.js 2>/dev/null | sort -V | tail -1)" '.statusLine = {"type": "command", "command": ("node " + $path), "refreshIntervalMs": 60000}' ~/.claude/settings.json > ~/.claude/settings.json.tmp && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
 ```
 
 ### 5. Confirm to user

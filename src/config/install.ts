@@ -60,6 +60,7 @@ export async function installToClaude(force = false): Promise<void> {
   current.statusLine = {
     type: 'command',
     command: `node ${cliPath}`,
+    refreshIntervalMs: 60000,
   };
 
   await fs.promises.mkdir(path.dirname(settingsPath), { recursive: true });

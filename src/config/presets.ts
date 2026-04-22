@@ -49,33 +49,29 @@ export const PRESETS: Record<string, Partial<Settings>> = {
     lines: [[{ id: 'model' }, { id: 'dailyUsage' }, { id: 'gptUsage' }]],
   },
   lite: {
-    lines: [[{ id: 'model' }, { id: 'claudePeak' }, { id: 'dailyUsage' }, { id: 'weeklyUsage' }]],
+    lines: [
+      [{ id: 'dailyUsage' }, { id: 'context' }, { id: 'rateLimit' }],
+      [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
+      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }, { id: 'gitBranch' }],
+    ],
   },
   plus: {
     lines: [
-      [
-        { id: 'model' },
-        { id: 'claudePeak' },
-        { id: 'dailyUsage' },
-        { id: 'weeklyUsage' },
-        { id: 'cacheHit' },
-        { id: 'cacheTtl' },
-        { id: 'sessionCost' },
-      ],
+      [{ id: 'dailyUsage' }, { id: 'context' }, { id: 'rateLimit' }],
+      [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
+      [{ id: 'spacer' }],
+      [{ id: 'cacheHit' }, { id: 'cacheTtl' }, { id: 'sessionCost' }],
+      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }, { id: 'gitBranch' }],
     ],
   },
   pro: {
     lines: [
-      [
-        { id: 'model' },
-        { id: 'claudePeak' },
-        { id: 'dailyUsage' },
-        { id: 'weeklyUsage' },
-        { id: 'cacheHit' },
-        { id: 'cacheTtl' },
-        { id: 'sessionCost' },
-        { id: 'gptUsage' },
-      ],
+      [{ id: 'dailyUsage' }, { id: 'context' }, { id: 'rateLimit' }],
+      [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
+      [{ id: 'codexModel' }, { id: 'codexRateLimit' }, { id: 'codexWeeklyRateLimit' }],
+      [{ id: 'spacer' }],
+      [{ id: 'cacheHit' }, { id: 'cacheTtl' }, { id: 'sessionCost' }],
+      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }, { id: 'gitBranch' }],
     ],
   },
 };

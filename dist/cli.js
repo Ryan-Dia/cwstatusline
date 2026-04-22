@@ -1285,33 +1285,29 @@ var PRESETS = {
     lines: [[{ id: "model" }, { id: "dailyUsage" }, { id: "gptUsage" }]]
   },
   lite: {
-    lines: [[{ id: "model" }, { id: "claudePeak" }, { id: "dailyUsage" }, { id: "weeklyUsage" }]]
+    lines: [
+      [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
+      [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
+      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }, { id: "gitBranch" }]
+    ]
   },
   plus: {
     lines: [
-      [
-        { id: "model" },
-        { id: "claudePeak" },
-        { id: "dailyUsage" },
-        { id: "weeklyUsage" },
-        { id: "cacheHit" },
-        { id: "cacheTtl" },
-        { id: "sessionCost" }
-      ]
+      [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
+      [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
+      [{ id: "spacer" }],
+      [{ id: "cacheHit" }, { id: "cacheTtl" }, { id: "sessionCost" }],
+      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }, { id: "gitBranch" }]
     ]
   },
   pro: {
     lines: [
-      [
-        { id: "model" },
-        { id: "claudePeak" },
-        { id: "dailyUsage" },
-        { id: "weeklyUsage" },
-        { id: "cacheHit" },
-        { id: "cacheTtl" },
-        { id: "sessionCost" },
-        { id: "gptUsage" }
-      ]
+      [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
+      [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
+      [{ id: "codexModel" }, { id: "codexRateLimit" }, { id: "codexWeeklyRateLimit" }],
+      [{ id: "spacer" }],
+      [{ id: "cacheHit" }, { id: "cacheTtl" }, { id: "sessionCost" }],
+      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }, { id: "gitBranch" }]
     ]
   }
 };
@@ -1704,7 +1700,8 @@ async function installToClaude(force = false) {
   const cliPath = await resolveCliPath();
   current.statusLine = {
     type: "command",
-    command: `node ${cliPath}`
+    command: `node ${cliPath}`,
+    refreshIntervalMs: 6e4
   };
   await fs7.promises.mkdir(path6.dirname(settingsPath), { recursive: true });
   await fs7.promises.writeFile(settingsPath, `${JSON.stringify(current, null, 2)}
