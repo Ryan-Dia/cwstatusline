@@ -1842,22 +1842,16 @@ chalk4.level = 3;
 function isLocale(v) {
   return v === "ko" || v === "en" || v === "zh";
 }
-async function main() {
-  const settings = await loadSettings();
-  const envLocale = process.env.FESTATUSLINE_LOCALE;
-  setLocale(isLocale(envLocale) ? envLocale : settings.locale);
-  const [, , sub] = process.argv;
-  if (sub === "setup") {
-    await runSetupWizard();
-    return;
-  }
-  if (sub === "install") {
-    const force = process.argv.includes("--force");
-    await installToClaude(force);
-    return;
-  }
-  if (sub === "doctor") {
-    await runDoctor();
+var commands = {
+  setup: () => runSetupWizard(),
+  install: (args) => installToClaude(args.includes("--force")),
+  doctor: () => runDoctor()
+};
+async function dispatch(argv) {
+  const [, , sub, ...rest] = argv;
+  const cmd = sub ? commands[sub] : void 0;
+  if (cmd) {
+    await cmd(rest);
     return;
   }
   if (!process.stdin.isTTY) {
@@ -1865,6 +1859,12 @@ async function main() {
     return;
   }
   await runTui();
+}
+async function main() {
+  const settings = await loadSettings();
+  const envLocale = process.env.FESTATUSLINE_LOCALE;
+  setLocale(isLocale(envLocale) ? envLocale : settings.locale);
+  await dispatch(process.argv);
 }
 main().catch((err) => {
   process.stderr.write(`festatusline error: ${String(err)}

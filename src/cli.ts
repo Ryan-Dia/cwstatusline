@@ -13,33 +13,33 @@ function isLocale(v: string | undefined): v is Locale {
   return v === 'ko' || v === 'en' || v === 'zh';
 }
 
-async function main(): Promise<void> {
-  const settings = await loadSettings();
-  const envLocale = process.env.FESTATUSLINE_LOCALE;
-  setLocale(isLocale(envLocale) ? envLocale : settings.locale);
+type Command = (args: string[]) => Promise<void>;
 
-  const [, , sub] = process.argv;
+const commands: Record<string, Command> = {
+  setup: () => runSetupWizard(),
+  install: (args) => installToClaude(args.includes('--force')),
+  doctor: () => runDoctor(),
+};
 
-  if (sub === 'setup') {
-    await runSetupWizard();
+async function dispatch(argv: string[]): Promise<void> {
+  const [, , sub, ...rest] = argv;
+  const cmd = sub ? commands[sub] : undefined;
+  if (cmd) {
+    await cmd(rest);
     return;
   }
-  if (sub === 'install') {
-    const force = process.argv.includes('--force');
-    await installToClaude(force);
-    return;
-  }
-  if (sub === 'doctor') {
-    await runDoctor();
-    return;
-  }
-
   if (!process.stdin.isTTY) {
     await renderFromStdin();
     return;
   }
-
   await runTui();
+}
+
+async function main(): Promise<void> {
+  const settings = await loadSettings();
+  const envLocale = process.env.FESTATUSLINE_LOCALE;
+  setLocale(isLocale(envLocale) ? envLocale : settings.locale);
+  await dispatch(process.argv);
 }
 
 main().catch((err) => {
