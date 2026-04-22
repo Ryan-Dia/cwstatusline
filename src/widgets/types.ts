@@ -26,3 +26,7 @@ export interface Widget {
   labelKey: I18nKey;
   render(ctx: RenderContext, cfg: WidgetConfig): string | null;
 }
+
+export function staticLabel(id: string, labelKey: I18nKey, text: string): Widget {
+  return { id, labelKey, render: () => text };
+}

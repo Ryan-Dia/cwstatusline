@@ -837,14 +837,13 @@ var PeakTimeWidget = {
   }
 };
 
+// src/widgets/types.ts
+function staticLabel(id, labelKey, text) {
+  return { id, labelKey, render: () => text };
+}
+
 // src/widgets/DailyUsage.ts
-var DailyUsageWidget = {
-  id: "dailyUsage",
-  labelKey: "widget.dailyUsage",
-  render(_ctx, _cfg) {
-    return "Daily  ";
-  }
-};
+var DailyUsageWidget = staticLabel("dailyUsage", "widget.dailyUsage", "Daily  ");
 
 // src/utils/duration.ts
 function formatRemainingHM(ms) {
@@ -925,13 +924,7 @@ var DailyResetTimerWidget = createResetTimerWidget({
 });
 
 // src/widgets/WeeklyUsage.ts
-var WeeklyUsageWidget = {
-  id: "weeklyUsage",
-  labelKey: "widget.weeklyUsage",
-  render(_ctx, _cfg) {
-    return "7days  ";
-  }
-};
+var WeeklyUsageWidget = staticLabel("weeklyUsage", "widget.weeklyUsage", "7days  ");
 
 // src/widgets/WeeklyResetTimer.ts
 var WeeklyResetTimerWidget = createResetTimerWidget({
