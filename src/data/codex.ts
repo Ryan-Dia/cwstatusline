@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import readline from 'readline';
+import { createTtlCache } from './cache.js';
 
 export interface CodexRateLimits {
   primary: { usedPercent: number; resetsAt: number };
@@ -104,46 +105,56 @@ async function readLastRateLimits(filePath: string): Promise<CodexRateLimits | n
   return last;
 }
 
+const codexCache = createTtlCache<CodexSnapshot>(30_000);
+
 export async function getCodexSnapshot(): Promise<CodexSnapshot> {
-  const histPath = await findHistoryFile();
-  if (!histPath) {
-    return { available: false, dailyRequests: 0, weeklyRequests: 0, rateLimits: null, model: null };
-  }
-
-  const [stat, latestSession, model] = await Promise.all([
-    fs.promises.stat(histPath),
-    findLatestSessionFile(),
-    readCodexModel(),
-  ]);
-  const rateLimits = latestSession ? await readLastRateLimits(latestSession) : null;
-
-  if (stat.isDirectory()) {
-    return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
-  }
-
-  const now = Date.now();
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const weekStart = now - 7 * 24 * 60 * 60 * 1000;
-
-  let daily = 0;
-  let weekly = 0;
-
-  const stream = fs.createReadStream(histPath, { encoding: 'utf8' });
-  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
-
-  for await (const line of rl) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    try {
-      const obj = JSON.parse(trimmed);
-      const ts = obj.timestamp ? new Date(obj.timestamp).getTime() : 0;
-      if (ts >= todayStart.getTime()) daily += 1;
-      if (ts >= weekStart) weekly += 1;
-    } catch (_e) {
-      // skip malformed lines
+  return codexCache.get(async () => {
+    const histPath = await findHistoryFile();
+    if (!histPath) {
+      return {
+        available: false,
+        dailyRequests: 0,
+        weeklyRequests: 0,
+        rateLimits: null,
+        model: null,
+      };
     }
-  }
 
-  return { available: true, dailyRequests: daily, weeklyRequests: weekly, rateLimits, model };
+    const [stat, latestSession, model] = await Promise.all([
+      fs.promises.stat(histPath),
+      findLatestSessionFile(),
+      readCodexModel(),
+    ]);
+    const rateLimits = latestSession ? await readLastRateLimits(latestSession) : null;
+
+    if (stat.isDirectory()) {
+      return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
+    }
+
+    const now = Date.now();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const weekStart = now - 7 * 24 * 60 * 60 * 1000;
+
+    let daily = 0;
+    let weekly = 0;
+
+    const stream = fs.createReadStream(histPath, { encoding: 'utf8' });
+    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+
+    for await (const line of rl) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const obj = JSON.parse(trimmed);
+        const ts = obj.timestamp ? new Date(obj.timestamp).getTime() : 0;
+        if (ts >= todayStart.getTime()) daily += 1;
+        if (ts >= weekStart) weekly += 1;
+      } catch (_e) {
+        // skip malformed lines
+      }
+    }
+
+    return { available: true, dailyRequests: daily, weeklyRequests: weekly, rateLimits, model };
+  });
 }

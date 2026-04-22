@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import os from 'os';
+import { createMtimeCache } from './cache.js';
 
 export interface UsageEntry {
   timestamp: number;
@@ -14,58 +15,46 @@ export interface UsageEntry {
   ephemeral1hTokens: number;
 }
 
-interface MtimeCache {
-  mtime: number;
-  entries: UsageEntry[];
-}
-
-const fileCache = new Map<string, MtimeCache>();
+const fileCache = createMtimeCache<UsageEntry[]>();
 
 function getClaudeDir(): string {
   return process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), '.claude');
 }
 
 async function parseJsonlFile(filePath: string): Promise<UsageEntry[]> {
-  const stat = await fs.promises.stat(filePath);
-  const mtime = stat.mtimeMs;
+  return fileCache.get(filePath, async (p) => {
+    const entries: UsageEntry[] = [];
+    const stream = fs.createReadStream(p, { encoding: 'utf8' });
+    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
 
-  const cached = fileCache.get(filePath);
-  if (cached && cached.mtime === mtime) {
-    return cached.entries;
-  }
-
-  const entries: UsageEntry[] = [];
-  const stream = fs.createReadStream(filePath, { encoding: 'utf8' });
-  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
-
-  for await (const line of rl) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    try {
-      const obj = JSON.parse(trimmed);
-      const msg = obj?.message ?? obj;
-      const usage = msg?.usage;
-      if (!usage) continue;
-      const timestamp: number = obj.timestamp ? new Date(obj.timestamp).getTime() : Date.now();
-      const model: string = msg.model ?? obj.model ?? '';
-      const cacheCreation = usage.cache_creation;
-      entries.push({
-        timestamp,
-        model,
-        inputTokens: usage.input_tokens ?? 0,
-        outputTokens: usage.output_tokens ?? 0,
-        cacheCreationTokens: usage.cache_creation_input_tokens ?? 0,
-        cacheReadTokens: usage.cache_read_input_tokens ?? 0,
-        ephemeral5mTokens: cacheCreation?.ephemeral_5m_input_tokens ?? 0,
-        ephemeral1hTokens: cacheCreation?.ephemeral_1h_input_tokens ?? 0,
-      });
-    } catch {
-      // skip malformed lines
+    for await (const line of rl) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const obj = JSON.parse(trimmed);
+        const msg = obj?.message ?? obj;
+        const usage = msg?.usage;
+        if (!usage) continue;
+        const timestamp: number = obj.timestamp ? new Date(obj.timestamp).getTime() : Date.now();
+        const model: string = msg.model ?? obj.model ?? '';
+        const cacheCreation = usage.cache_creation;
+        entries.push({
+          timestamp,
+          model,
+          inputTokens: usage.input_tokens ?? 0,
+          outputTokens: usage.output_tokens ?? 0,
+          cacheCreationTokens: usage.cache_creation_input_tokens ?? 0,
+          cacheReadTokens: usage.cache_read_input_tokens ?? 0,
+          ephemeral5mTokens: cacheCreation?.ephemeral_5m_input_tokens ?? 0,
+          ephemeral1hTokens: cacheCreation?.ephemeral_1h_input_tokens ?? 0,
+        });
+      } catch {
+        // skip malformed lines
+      }
     }
-  }
 
-  fileCache.set(filePath, { mtime, entries });
-  return entries;
+    return entries;
+  });
 }
 
 export async function loadAllEntries(): Promise<UsageEntry[]> {

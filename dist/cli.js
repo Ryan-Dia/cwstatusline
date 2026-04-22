@@ -4,7 +4,7 @@
 import chalk4 from "chalk";
 
 // src/render/index.ts
-import { promises as fs5 } from "fs";
+import { promises as fs6 } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 
@@ -87,56 +87,89 @@ async function readStdin() {
 }
 
 // src/data/jsonl.ts
-import fs from "fs";
+import fs2 from "fs";
 import path from "path";
 import readline from "readline";
 import os from "os";
-var fileCache = /* @__PURE__ */ new Map();
+
+// src/data/cache.ts
+import { promises as fs } from "fs";
+function createTtlCache(ttlMs) {
+  let cached = null;
+  return {
+    async get(compute) {
+      const now = Date.now();
+      if (cached && now - cached.loadedAt < ttlMs) {
+        return cached.value;
+      }
+      const value = await compute();
+      cached = { value, loadedAt: now };
+      return value;
+    },
+    invalidate() {
+      cached = null;
+    }
+  };
+}
+function createMtimeCache() {
+  const store = /* @__PURE__ */ new Map();
+  return {
+    async get(filePath, compute) {
+      const stat = await fs.stat(filePath);
+      const mtime = stat.mtimeMs;
+      const entry = store.get(filePath);
+      if (entry && entry.mtime === mtime) {
+        return entry.value;
+      }
+      const value = await compute(filePath);
+      store.set(filePath, { mtime, value });
+      return value;
+    }
+  };
+}
+
+// src/data/jsonl.ts
+var fileCache = createMtimeCache();
 function getClaudeDir() {
   return process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
 }
 async function parseJsonlFile(filePath) {
-  const stat = await fs.promises.stat(filePath);
-  const mtime = stat.mtimeMs;
-  const cached2 = fileCache.get(filePath);
-  if (cached2 && cached2.mtime === mtime) {
-    return cached2.entries;
-  }
-  const entries = [];
-  const stream = fs.createReadStream(filePath, { encoding: "utf8" });
-  const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
-  for await (const line of rl) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    try {
-      const obj = JSON.parse(trimmed);
-      const msg = obj?.message ?? obj;
-      const usage = msg?.usage;
-      if (!usage) continue;
-      const timestamp = obj.timestamp ? new Date(obj.timestamp).getTime() : Date.now();
-      const model = msg.model ?? obj.model ?? "";
-      const cacheCreation = usage.cache_creation;
-      entries.push({
-        timestamp,
-        model,
-        inputTokens: usage.input_tokens ?? 0,
-        outputTokens: usage.output_tokens ?? 0,
-        cacheCreationTokens: usage.cache_creation_input_tokens ?? 0,
-        cacheReadTokens: usage.cache_read_input_tokens ?? 0,
-        ephemeral5mTokens: cacheCreation?.ephemeral_5m_input_tokens ?? 0,
-        ephemeral1hTokens: cacheCreation?.ephemeral_1h_input_tokens ?? 0
-      });
-    } catch {
+  return fileCache.get(filePath, async (p) => {
+    const entries = [];
+    const stream = fs2.createReadStream(p, { encoding: "utf8" });
+    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+    for await (const line of rl) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const obj = JSON.parse(trimmed);
+        const msg = obj?.message ?? obj;
+        const usage = msg?.usage;
+        if (!usage) continue;
+        const timestamp = obj.timestamp ? new Date(obj.timestamp).getTime() : Date.now();
+        const model = msg.model ?? obj.model ?? "";
+        const cacheCreation = usage.cache_creation;
+        entries.push({
+          timestamp,
+          model,
+          inputTokens: usage.input_tokens ?? 0,
+          outputTokens: usage.output_tokens ?? 0,
+          cacheCreationTokens: usage.cache_creation_input_tokens ?? 0,
+          cacheReadTokens: usage.cache_read_input_tokens ?? 0,
+          ephemeral5mTokens: cacheCreation?.ephemeral_5m_input_tokens ?? 0,
+          ephemeral1hTokens: cacheCreation?.ephemeral_1h_input_tokens ?? 0
+        });
+      } catch {
+      }
     }
-  }
-  fileCache.set(filePath, { mtime, entries });
-  return entries;
+    return entries;
+  });
 }
 async function loadAllEntries() {
   const projectsDir = path.join(getClaudeDir(), "projects");
   let projectDirs;
   try {
-    projectDirs = await fs.promises.readdir(projectsDir);
+    projectDirs = await fs2.promises.readdir(projectsDir);
   } catch {
     return [];
   }
@@ -146,7 +179,7 @@ async function loadAllEntries() {
       const dirPath = path.join(projectsDir, dir);
       let files;
       try {
-        files = await fs.promises.readdir(dirPath);
+        files = await fs2.promises.readdir(dirPath);
       } catch {
         return;
       }
@@ -181,48 +214,38 @@ function totalTokens(e) {
 function isSonnet(model) {
   return /sonnet/i.test(model);
 }
-var cached = null;
-var CACHE_TTL_MS = 3e4;
+var cache = createTtlCache(3e4);
 async function getUsageSnapshot() {
-  const now = Date.now();
-  if (cached && now - cached.loadedAt < CACHE_TTL_MS) {
-    return cached.snapshot;
-  }
-  const entries = await loadAllEntries();
-  const todayStart = /* @__PURE__ */ new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayStartMs = todayStart.getTime();
-  const weekStartMs = now - 7 * 24 * 60 * 60 * 1e3;
-  let dailyTokens = 0;
-  let weeklyTokens = 0;
-  let sonnetWeeklyTokens = 0;
-  let lastModel = null;
-  let lastTimestamp = 0;
-  for (const e of entries) {
-    const total = totalTokens(e);
-    if (e.timestamp >= todayStartMs) dailyTokens += total;
-    if (e.timestamp >= weekStartMs) {
-      weeklyTokens += total;
-      if (isSonnet(e.model)) sonnetWeeklyTokens += total;
+  return cache.get(async () => {
+    const entries = await loadAllEntries();
+    const now = Date.now();
+    const todayStart = /* @__PURE__ */ new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartMs = todayStart.getTime();
+    const weekStartMs = now - 7 * 24 * 60 * 60 * 1e3;
+    let dailyTokens = 0;
+    let weeklyTokens = 0;
+    let sonnetWeeklyTokens = 0;
+    let lastModel = null;
+    let lastTimestamp = 0;
+    for (const e of entries) {
+      const total = totalTokens(e);
+      if (e.timestamp >= todayStartMs) dailyTokens += total;
+      if (e.timestamp >= weekStartMs) {
+        weeklyTokens += total;
+        if (isSonnet(e.model)) sonnetWeeklyTokens += total;
+      }
+      if (e.model && e.timestamp > lastTimestamp) {
+        lastTimestamp = e.timestamp;
+        lastModel = e.model;
+      }
     }
-    if (e.model && e.timestamp > lastTimestamp) {
-      lastTimestamp = e.timestamp;
-      lastModel = e.model;
-    }
-  }
-  const snapshot = {
-    dailyTokens,
-    weeklyTokens,
-    sonnetWeeklyTokens,
-    allEntries: entries,
-    lastModel
-  };
-  cached = { snapshot, loadedAt: now };
-  return snapshot;
+    return { dailyTokens, weeklyTokens, sonnetWeeklyTokens, allEntries: entries, lastModel };
+  });
 }
 
 // src/data/codex.ts
-import fs2 from "fs";
+import fs3 from "fs";
 import path2 from "path";
 import os2 from "os";
 import readline2 from "readline";
@@ -231,7 +254,7 @@ function getCodexDir() {
 }
 async function readCodexModel() {
   try {
-    const raw = await fs2.promises.readFile(path2.join(getCodexDir(), "config.toml"), "utf8");
+    const raw = await fs3.promises.readFile(path2.join(getCodexDir(), "config.toml"), "utf8");
     const match = raw.match(/^model\s*=\s*"([^"]+)"/m);
     return match?.[1] ?? null;
   } catch {
@@ -243,7 +266,7 @@ async function findHistoryFile() {
   const candidates = [path2.join(base, "history.jsonl"), path2.join(base, "sessions")];
   for (const c of candidates) {
     try {
-      await fs2.promises.access(c);
+      await fs3.promises.access(c);
       return c;
     } catch {
       continue;
@@ -254,14 +277,14 @@ async function findHistoryFile() {
 async function findLatestSessionFile() {
   const sessionsDir = path2.join(getCodexDir(), "sessions");
   try {
-    const years = (await fs2.promises.readdir(sessionsDir)).filter((y) => /^\d{4}$/.test(y)).sort().reverse();
+    const years = (await fs3.promises.readdir(sessionsDir)).filter((y) => /^\d{4}$/.test(y)).sort().reverse();
     for (const year of years) {
-      const months = (await fs2.promises.readdir(path2.join(sessionsDir, year))).sort().reverse();
+      const months = (await fs3.promises.readdir(path2.join(sessionsDir, year))).sort().reverse();
       for (const month of months) {
-        const days = (await fs2.promises.readdir(path2.join(sessionsDir, year, month))).sort().reverse();
+        const days = (await fs3.promises.readdir(path2.join(sessionsDir, year, month))).sort().reverse();
         for (const day of days) {
           const dayDir = path2.join(sessionsDir, year, month, day);
-          const files = (await fs2.promises.readdir(dayDir)).filter((f) => f.endsWith(".jsonl")).sort().reverse();
+          const files = (await fs3.promises.readdir(dayDir)).filter((f) => f.endsWith(".jsonl")).sort().reverse();
           if (files.length > 0) return path2.join(dayDir, files[0]);
         }
       }
@@ -271,7 +294,7 @@ async function findLatestSessionFile() {
   return null;
 }
 async function readLastRateLimits(filePath) {
-  const stream = fs2.createReadStream(filePath, { encoding: "utf8" });
+  const stream = fs3.createReadStream(filePath, { encoding: "utf8" });
   const rl = readline2.createInterface({ input: stream, crlfDelay: Infinity });
   let last = null;
   for await (const line of rl) {
@@ -299,51 +322,54 @@ async function readLastRateLimits(filePath) {
   }
   return last;
 }
+var codexCache = createTtlCache(3e4);
 async function getCodexSnapshot() {
-  const histPath = await findHistoryFile();
-  if (!histPath) {
-    return { available: false, dailyRequests: 0, weeklyRequests: 0, rateLimits: null, model: null };
-  }
-  const [stat, latestSession, model] = await Promise.all([
-    fs2.promises.stat(histPath),
-    findLatestSessionFile(),
-    readCodexModel()
-  ]);
-  const rateLimits = latestSession ? await readLastRateLimits(latestSession) : null;
-  if (stat.isDirectory()) {
-    return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
-  }
-  const now = Date.now();
-  const todayStart = /* @__PURE__ */ new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const weekStart = now - 7 * 24 * 60 * 60 * 1e3;
-  let daily = 0;
-  let weekly = 0;
-  const stream = fs2.createReadStream(histPath, { encoding: "utf8" });
-  const rl = readline2.createInterface({ input: stream, crlfDelay: Infinity });
-  for await (const line of rl) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    try {
-      const obj = JSON.parse(trimmed);
-      const ts = obj.timestamp ? new Date(obj.timestamp).getTime() : 0;
-      if (ts >= todayStart.getTime()) daily += 1;
-      if (ts >= weekStart) weekly += 1;
-    } catch (_e) {
+  return codexCache.get(async () => {
+    const histPath = await findHistoryFile();
+    if (!histPath) {
+      return { available: false, dailyRequests: 0, weeklyRequests: 0, rateLimits: null, model: null };
     }
-  }
-  return { available: true, dailyRequests: daily, weeklyRequests: weekly, rateLimits, model };
+    const [stat, latestSession, model] = await Promise.all([
+      fs3.promises.stat(histPath),
+      findLatestSessionFile(),
+      readCodexModel()
+    ]);
+    const rateLimits = latestSession ? await readLastRateLimits(latestSession) : null;
+    if (stat.isDirectory()) {
+      return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
+    }
+    const now = Date.now();
+    const todayStart = /* @__PURE__ */ new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const weekStart = now - 7 * 24 * 60 * 60 * 1e3;
+    let daily = 0;
+    let weekly = 0;
+    const stream = fs3.createReadStream(histPath, { encoding: "utf8" });
+    const rl = readline2.createInterface({ input: stream, crlfDelay: Infinity });
+    for await (const line of rl) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const obj = JSON.parse(trimmed);
+        const ts = obj.timestamp ? new Date(obj.timestamp).getTime() : 0;
+        if (ts >= todayStart.getTime()) daily += 1;
+        if (ts >= weekStart) weekly += 1;
+      } catch (_e) {
+      }
+    }
+    return { available: true, dailyRequests: daily, weeklyRequests: weekly, rateLimits, model };
+  });
 }
 
 // src/data/claude-settings.ts
-import fs3 from "fs";
+import fs4 from "fs";
 import path3 from "path";
 import os3 from "os";
 async function readClaudeSettings() {
   const dir = process.env.CLAUDE_CONFIG_DIR ?? path3.join(os3.homedir(), ".claude");
   const settingsPath = path3.join(dir, "settings.json");
   try {
-    const raw = await fs3.promises.readFile(settingsPath, "utf8");
+    const raw = await fs4.promises.readFile(settingsPath, "utf8");
     const parsed = JSON.parse(raw);
     return {
       effortLevel: typeof parsed.effortLevel === "string" ? parsed.effortLevel : void 0
@@ -354,7 +380,7 @@ async function readClaudeSettings() {
 }
 
 // src/config/load.ts
-import fs4 from "fs";
+import fs5 from "fs";
 import path4 from "path";
 import os4 from "os";
 
@@ -384,7 +410,7 @@ function getConfigPath() {
 async function loadSettings() {
   const configPath = getConfigPath();
   try {
-    const raw = await fs4.promises.readFile(configPath, "utf8");
+    const raw = await fs5.promises.readFile(configPath, "utf8");
     return SettingsSchema.parse(JSON.parse(raw));
   } catch {
     return SettingsSchema.parse({});
@@ -1067,11 +1093,11 @@ var CacheHitWidget = {
   render(ctx, _cfg) {
     const usage = ctx.stdin.context_window?.current_usage;
     if (!usage) return null;
-    const cached2 = usage.cache_read_input_tokens ?? 0;
+    const cached = usage.cache_read_input_tokens ?? 0;
     const input = usage.input_tokens ?? 0;
-    const denom = input + cached2;
+    const denom = input + cached;
     if (denom === 0) return null;
-    const pct = Math.round(cached2 / denom * 100);
+    const pct = Math.round(cached / denom * 100);
     return `\u26A1${pct}%`;
   }
 };
@@ -1173,16 +1199,16 @@ var CACHE_DIR = process.env.XDG_CACHE_HOME ? join(process.env.XDG_CACHE_HOME, "f
 var RATE_LIMITS_CACHE_PATH = join(CACHE_DIR, "rate_limits.json");
 async function readRateLimitsCache() {
   try {
-    const raw = await fs5.readFile(RATE_LIMITS_CACHE_PATH, "utf8");
+    const raw = await fs6.readFile(RATE_LIMITS_CACHE_PATH, "utf8");
     return JSON.parse(raw);
   } catch {
     return null;
   }
 }
 async function writeRateLimitsCache(rateLimits) {
-  await fs5.mkdir(CACHE_DIR, { recursive: true }).catch(() => {
+  await fs6.mkdir(CACHE_DIR, { recursive: true }).catch(() => {
   });
-  await fs5.writeFile(RATE_LIMITS_CACHE_PATH, JSON.stringify(rateLimits), "utf8").catch(() => {
+  await fs6.writeFile(RATE_LIMITS_CACHE_PATH, JSON.stringify(rateLimits), "utf8").catch(() => {
   });
 }
 async function renderFromStdin() {
@@ -1229,12 +1255,12 @@ import React7 from "react";
 import { render } from "ink";
 
 // src/config/save.ts
-import fs6 from "fs";
+import fs7 from "fs";
 import path5 from "path";
 async function saveSettings(settings) {
   const configPath = getConfigPath();
-  await fs6.promises.mkdir(path5.dirname(configPath), { recursive: true });
-  await fs6.promises.writeFile(configPath, `${JSON.stringify(settings, null, 2)}
+  await fs7.promises.mkdir(path5.dirname(configPath), { recursive: true });
+  await fs7.promises.writeFile(configPath, `${JSON.stringify(settings, null, 2)}
 `, "utf8");
 }
 
@@ -1674,7 +1700,7 @@ async function runSetupWizard() {
 }
 
 // src/config/install.ts
-import fs7 from "fs";
+import fs8 from "fs";
 import path6 from "path";
 import os5 from "os";
 import { fileURLToPath } from "url";
@@ -1692,7 +1718,7 @@ async function resolveCliPath() {
     "festatusline"
   );
   try {
-    const versions = await fs7.promises.readdir(pluginCacheBase);
+    const versions = await fs8.promises.readdir(pluginCacheBase);
     const sorted = versions.filter((v) => /^\d+\.\d+\.\d+$/.test(v)).sort((a, b) => a.localeCompare(b, void 0, { numeric: true }));
     const latest = sorted.at(-1);
     if (latest) {
@@ -1706,7 +1732,7 @@ async function installToClaude(force = false) {
   const settingsPath = getClaudeSettingsPath();
   let current = {};
   try {
-    const raw = await fs7.promises.readFile(settingsPath, "utf8");
+    const raw = await fs8.promises.readFile(settingsPath, "utf8");
     current = JSON.parse(raw);
   } catch {
   }
@@ -1721,7 +1747,7 @@ async function installToClaude(force = false) {
   }
   const backup = `${settingsPath}.bak`;
   if (Object.keys(current).length > 0) {
-    await fs7.promises.writeFile(backup, `${JSON.stringify(current, null, 2)}
+    await fs8.promises.writeFile(backup, `${JSON.stringify(current, null, 2)}
 `, "utf8");
   }
   const cliPath = await resolveCliPath();
@@ -1730,20 +1756,20 @@ async function installToClaude(force = false) {
     command: `node ${cliPath}`,
     refreshIntervalMs: 6e4
   };
-  await fs7.promises.mkdir(path6.dirname(settingsPath), { recursive: true });
-  await fs7.promises.writeFile(settingsPath, `${JSON.stringify(current, null, 2)}
+  await fs8.promises.mkdir(path6.dirname(settingsPath), { recursive: true });
+  await fs8.promises.writeFile(settingsPath, `${JSON.stringify(current, null, 2)}
 `, "utf8");
   process.stdout.write(`${t("install.success")}
 `);
 }
 
 // src/config/doctor.ts
-import fs8 from "fs";
+import fs9 from "fs";
 import path7 from "path";
 import os6 from "os";
 async function exists(p) {
   try {
-    await fs8.promises.access(p);
+    await fs9.promises.access(p);
     return true;
   } catch {
     return false;
