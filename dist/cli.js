@@ -1521,58 +1521,71 @@ function LanguageSelect({
 import React5, { useState } from "react";
 import { Box as Box5, Text as Text4 } from "ink";
 import SelectInput5 from "ink-select-input";
+function WidgetAddMode({ firstLine, onCommit, onBack }) {
+  const existing = new Set(firstLine.map((w) => w.id));
+  const items = [
+    ...ALL_WIDGETS.filter((w) => !existing.has(w.id)).map((w) => ({
+      label: t(w.labelKey),
+      value: w.id
+    })),
+    { label: "\u2190 \uB4A4\uB85C", value: "__back__" }
+  ];
+  return /* @__PURE__ */ React5.createElement(Box5, { flexDirection: "column", padding: 1 }, /* @__PURE__ */ React5.createElement(Text4, { bold: true }, "\uC704\uC82F \uCD94\uAC00"), /* @__PURE__ */ React5.createElement(
+    SelectInput5,
+    {
+      items,
+      onSelect: (item) => {
+        if (item.value === "__back__") {
+          onBack();
+          return;
+        }
+        onCommit([...firstLine, { id: item.value }]);
+      }
+    }
+  ));
+}
+function WidgetRemoveMode({ firstLine, onCommit, onBack }) {
+  const items = [
+    ...firstLine.map((w) => {
+      const labelKey = ALL_WIDGETS.find((a) => a.id === w.id)?.labelKey ?? "widget.model";
+      return { label: t(labelKey), value: w.id };
+    }),
+    { label: "\u2190 \uB4A4\uB85C", value: "__back__" }
+  ];
+  return /* @__PURE__ */ React5.createElement(Box5, { flexDirection: "column", padding: 1 }, /* @__PURE__ */ React5.createElement(Text4, { bold: true }, "\uC704\uC82F \uC81C\uAC70"), /* @__PURE__ */ React5.createElement(
+    SelectInput5,
+    {
+      items,
+      onSelect: (item) => {
+        if (item.value === "__back__") {
+          onBack();
+          return;
+        }
+        onCommit(firstLine.filter((w) => w.id !== item.value));
+      }
+    }
+  ));
+}
 function WidgetEditor({ lines, onSave, onBack }) {
   const [currentLines, setCurrentLines] = useState(lines);
   const [mode, setMode] = useState("view");
   const firstLine = currentLines[0] ?? [];
+  const commitFirstLine = (updated) => {
+    setCurrentLines([updated, ...currentLines.slice(1)]);
+    setMode("view");
+  };
+  if (mode === "add") {
+    return /* @__PURE__ */ React5.createElement(WidgetAddMode, { firstLine, onCommit: commitFirstLine, onBack: () => setMode("view") });
+  }
+  if (mode === "remove") {
+    return /* @__PURE__ */ React5.createElement(WidgetRemoveMode, { firstLine, onCommit: commitFirstLine, onBack: () => setMode("view") });
+  }
   const actions = [
     { label: "+ \uC704\uC82F \uCD94\uAC00", value: "add" },
     { label: "- \uC704\uC82F \uC81C\uAC70", value: "remove" },
     { label: "\u2713 \uC800\uC7A5 \uD6C4 \uB3CC\uC544\uAC00\uAE30", value: "save" },
     { label: "\u2190 \uCDE8\uC18C", value: "back" }
   ];
-  if (mode === "add") {
-    const existing = new Set(firstLine.map((w) => w.id));
-    const addable = ALL_WIDGETS.filter((w) => !existing.has(w.id)).map((w) => ({
-      label: t(w.labelKey),
-      value: w.id
-    }));
-    return /* @__PURE__ */ React5.createElement(Box5, { flexDirection: "column", padding: 1 }, /* @__PURE__ */ React5.createElement(Text4, { bold: true }, "\uC704\uC82F \uCD94\uAC00"), /* @__PURE__ */ React5.createElement(
-      SelectInput5,
-      {
-        items: [...addable, { label: "\u2190 \uB4A4\uB85C", value: "__back__" }],
-        onSelect: (item) => {
-          if (item.value === "__back__") {
-            setMode("view");
-            return;
-          }
-          setCurrentLines([[...firstLine, { id: item.value }], ...currentLines.slice(1)]);
-          setMode("view");
-        }
-      }
-    ));
-  }
-  if (mode === "remove") {
-    const removable = firstLine.map((w) => {
-      const labelKey = ALL_WIDGETS.find((a) => a.id === w.id)?.labelKey ?? "widget.model";
-      return { label: t(labelKey), value: w.id };
-    });
-    return /* @__PURE__ */ React5.createElement(Box5, { flexDirection: "column", padding: 1 }, /* @__PURE__ */ React5.createElement(Text4, { bold: true }, "\uC704\uC82F \uC81C\uAC70"), /* @__PURE__ */ React5.createElement(
-      SelectInput5,
-      {
-        items: [...removable, { label: "\u2190 \uB4A4\uB85C", value: "__back__" }],
-        onSelect: (item) => {
-          if (item.value === "__back__") {
-            setMode("view");
-            return;
-          }
-          const updated = firstLine.filter((w) => w.id !== item.value);
-          setCurrentLines([updated, ...currentLines.slice(1)]);
-          setMode("view");
-        }
-      }
-    ));
-  }
   return /* @__PURE__ */ React5.createElement(Box5, { flexDirection: "column", padding: 1 }, /* @__PURE__ */ React5.createElement(Text4, { bold: true }, "\uC704\uC82F \uD3B8\uC9D1"), /* @__PURE__ */ React5.createElement(Text4, { dimColor: true }, firstLine.map((w) => w.id).join(" \u2502 ")), /* @__PURE__ */ React5.createElement(
     SelectInput5,
     {

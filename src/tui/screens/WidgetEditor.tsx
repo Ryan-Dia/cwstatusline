@@ -13,11 +13,93 @@ interface Props {
 
 type EditorMode = 'view' | 'add' | 'remove';
 
+interface ModeProps {
+  firstLine: WidgetCfg[];
+  onCommit: (updated: WidgetCfg[]) => void;
+  onBack: () => void;
+}
+
+function WidgetAddMode({ firstLine, onCommit, onBack }: ModeProps): React.ReactElement {
+  const existing = new Set(firstLine.map((w) => w.id));
+  const items = [
+    ...ALL_WIDGETS.filter((w) => !existing.has(w.id)).map((w) => ({
+      label: t(w.labelKey),
+      value: w.id,
+    })),
+    { label: '← 뒤로', value: '__back__' },
+  ];
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Text bold>위젯 추가</Text>
+      <SelectInput
+        items={items}
+        onSelect={(item) => {
+          if (item.value === '__back__') {
+            onBack();
+            return;
+          }
+          onCommit([...firstLine, { id: item.value }]);
+        }}
+      />
+    </Box>
+  );
+}
+
+function WidgetRemoveMode({ firstLine, onCommit, onBack }: ModeProps): React.ReactElement {
+  const items = [
+    ...firstLine.map((w) => {
+      const labelKey = ALL_WIDGETS.find((a) => a.id === w.id)?.labelKey ?? 'widget.model';
+      return { label: t(labelKey), value: w.id };
+    }),
+    { label: '← 뒤로', value: '__back__' },
+  ];
+  return (
+    <Box flexDirection="column" padding={1}>
+      <Text bold>위젯 제거</Text>
+      <SelectInput
+        items={items}
+        onSelect={(item) => {
+          if (item.value === '__back__') {
+            onBack();
+            return;
+          }
+          onCommit(firstLine.filter((w) => w.id !== item.value));
+        }}
+      />
+    </Box>
+  );
+}
+
 export default function WidgetEditor({ lines, onSave, onBack }: Props): React.ReactElement {
   const [currentLines, setCurrentLines] = useState<WidgetCfg[][]>(lines);
   const [mode, setMode] = useState<EditorMode>('view');
 
   const firstLine = currentLines[0] ?? [];
+
+  const commitFirstLine = (updated: WidgetCfg[]): void => {
+    setCurrentLines([updated, ...currentLines.slice(1)]);
+    setMode('view');
+  };
+
+  if (mode === 'add') {
+    return (
+      <WidgetAddMode
+        firstLine={firstLine}
+        onCommit={commitFirstLine}
+        onBack={() => setMode('view')}
+      />
+    );
+  }
+
+  if (mode === 'remove') {
+    return (
+      <WidgetRemoveMode
+        firstLine={firstLine}
+        onCommit={commitFirstLine}
+        onBack={() => setMode('view')}
+      />
+    );
+  }
 
   const actions = [
     { label: '+ 위젯 추가', value: 'add' },
@@ -25,54 +107,6 @@ export default function WidgetEditor({ lines, onSave, onBack }: Props): React.Re
     { label: '✓ 저장 후 돌아가기', value: 'save' },
     { label: '← 취소', value: 'back' },
   ];
-
-  if (mode === 'add') {
-    const existing = new Set(firstLine.map((w) => w.id));
-    const addable = ALL_WIDGETS.filter((w) => !existing.has(w.id)).map((w) => ({
-      label: t(w.labelKey),
-      value: w.id,
-    }));
-    return (
-      <Box flexDirection="column" padding={1}>
-        <Text bold>위젯 추가</Text>
-        <SelectInput
-          items={[...addable, { label: '← 뒤로', value: '__back__' }]}
-          onSelect={(item) => {
-            if (item.value === '__back__') {
-              setMode('view');
-              return;
-            }
-            setCurrentLines([[...firstLine, { id: item.value }], ...currentLines.slice(1)]);
-            setMode('view');
-          }}
-        />
-      </Box>
-    );
-  }
-
-  if (mode === 'remove') {
-    const removable = firstLine.map((w) => {
-      const labelKey = ALL_WIDGETS.find((a) => a.id === w.id)?.labelKey ?? 'widget.model';
-      return { label: t(labelKey), value: w.id };
-    });
-    return (
-      <Box flexDirection="column" padding={1}>
-        <Text bold>위젯 제거</Text>
-        <SelectInput
-          items={[...removable, { label: '← 뒤로', value: '__back__' }]}
-          onSelect={(item) => {
-            if (item.value === '__back__') {
-              setMode('view');
-              return;
-            }
-            const updated = firstLine.filter((w) => w.id !== item.value);
-            setCurrentLines([updated, ...currentLines.slice(1)]);
-            setMode('view');
-          }}
-        />
-      </Box>
-    );
-  }
 
   return (
     <Box flexDirection="column" padding={1}>
