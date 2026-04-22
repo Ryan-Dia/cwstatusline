@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
+import { z } from 'zod';
 import { readStdin } from '../data/stdin.js';
 import { getUsageSnapshot } from '../data/usage.js';
 import { getCodexSnapshot } from '../data/codex.js';
@@ -17,20 +18,39 @@ const CACHE_DIR = process.env.XDG_CACHE_HOME
   : join(homedir(), '.cache', 'festatusline');
 const RATE_LIMITS_CACHE_PATH = join(CACHE_DIR, 'rate_limits.json');
 
-type RateLimitsCache = NonNullable<import('../data/stdin.js').ClaudeStdin['rate_limits']>;
+const RateLimitPeriodSchema = z.object({
+  used_percentage: z.number().optional(),
+  resets_at: z.number().optional(),
+});
 
-async function readRateLimitsCache(): Promise<RateLimitsCache | null> {
+const RateLimitsCacheSchema = z.object({
+  five_hour: RateLimitPeriodSchema.optional(),
+  seven_day: RateLimitPeriodSchema.optional(),
+});
+
+type RateLimitsCache = z.infer<typeof RateLimitsCacheSchema>;
+
+async function tryOrNull<T>(fn: () => Promise<T>): Promise<T | null> {
   try {
-    const raw = await fs.readFile(RATE_LIMITS_CACHE_PATH, 'utf8');
-    return JSON.parse(raw) as RateLimitsCache;
+    return await fn();
   } catch {
     return null;
   }
 }
 
+async function readRateLimitsCache(): Promise<RateLimitsCache | null> {
+  return tryOrNull(async () => {
+    const raw = await fs.readFile(RATE_LIMITS_CACHE_PATH, 'utf8');
+    const result = RateLimitsCacheSchema.safeParse(JSON.parse(raw));
+    return result.success ? result.data : null;
+  });
+}
+
 async function writeRateLimitsCache(rateLimits: RateLimitsCache): Promise<void> {
-  await fs.mkdir(CACHE_DIR, { recursive: true }).catch(() => {});
-  await fs.writeFile(RATE_LIMITS_CACHE_PATH, JSON.stringify(rateLimits), 'utf8').catch(() => {});
+  await tryOrNull(async () => {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+    await fs.writeFile(RATE_LIMITS_CACHE_PATH, JSON.stringify(rateLimits), 'utf8');
+  });
 }
 
 export async function renderFromStdin(): Promise<void> {
@@ -39,10 +59,10 @@ export async function renderFromStdin(): Promise<void> {
       readStdin(),
       loadSettings(),
       readClaudeSettings(),
-      getUsageSnapshot().catch(() => null),
-      getCodexSnapshot().catch(() => null),
+      tryOrNull(getUsageSnapshot),
+      tryOrNull(getCodexSnapshot),
       readRateLimitsCache(),
-      getLastCacheCreation().catch(() => null),
+      tryOrNull(getLastCacheCreation),
     ]);
 
   const t = createTranslator(settings.locale);

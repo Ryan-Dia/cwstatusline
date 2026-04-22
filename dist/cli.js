@@ -7,6 +7,7 @@ import chalk4 from "chalk";
 import { promises as fs6 } from "fs";
 import { homedir } from "os";
 import { join } from "path";
+import { z as z6 } from "zod";
 
 // src/data/stdin.ts
 import { z } from "zod";
@@ -1229,18 +1230,32 @@ function renderAllLines(lines, ctx, separator) {
 // src/render/index.ts
 var CACHE_DIR = process.env.XDG_CACHE_HOME ? join(process.env.XDG_CACHE_HOME, "festatusline") : join(homedir(), ".cache", "festatusline");
 var RATE_LIMITS_CACHE_PATH = join(CACHE_DIR, "rate_limits.json");
-async function readRateLimitsCache() {
+var RateLimitPeriodSchema2 = z6.object({
+  used_percentage: z6.number().optional(),
+  resets_at: z6.number().optional()
+});
+var RateLimitsCacheSchema = z6.object({
+  five_hour: RateLimitPeriodSchema2.optional(),
+  seven_day: RateLimitPeriodSchema2.optional()
+});
+async function tryOrNull(fn) {
   try {
-    const raw = await fs6.readFile(RATE_LIMITS_CACHE_PATH, "utf8");
-    return JSON.parse(raw);
+    return await fn();
   } catch {
     return null;
   }
 }
-async function writeRateLimitsCache(rateLimits) {
-  await fs6.mkdir(CACHE_DIR, { recursive: true }).catch(() => {
+async function readRateLimitsCache() {
+  return tryOrNull(async () => {
+    const raw = await fs6.readFile(RATE_LIMITS_CACHE_PATH, "utf8");
+    const result = RateLimitsCacheSchema.safeParse(JSON.parse(raw));
+    return result.success ? result.data : null;
   });
-  await fs6.writeFile(RATE_LIMITS_CACHE_PATH, JSON.stringify(rateLimits), "utf8").catch(() => {
+}
+async function writeRateLimitsCache(rateLimits) {
+  await tryOrNull(async () => {
+    await fs6.mkdir(CACHE_DIR, { recursive: true });
+    await fs6.writeFile(RATE_LIMITS_CACHE_PATH, JSON.stringify(rateLimits), "utf8");
   });
 }
 async function renderFromStdin() {
@@ -1248,10 +1263,10 @@ async function renderFromStdin() {
     readStdin(),
     loadSettings(),
     readClaudeSettings(),
-    getUsageSnapshot().catch(() => null),
-    getCodexSnapshot().catch(() => null),
+    tryOrNull(getUsageSnapshot),
+    tryOrNull(getCodexSnapshot),
     readRateLimitsCache(),
-    getLastCacheCreation().catch(() => null)
+    tryOrNull(getLastCacheCreation)
   ]);
   const t2 = createTranslator(settings.locale);
   if (stdin.rate_limits) {
