@@ -1,11 +1,9 @@
 import type { Widget, RenderContext, WidgetConfig } from './types.js';
 import type { I18nKey } from '../i18n/index.js';
-import { buildBar, fmtPct } from '../utils/bar.js';
-import { formatRemainingHM, formatAbsDatetime } from '../utils/duration.js';
 import type { CodexRateLimits } from '../data/codex.js';
+import { renderRateLimitSlot, type RateLimitTimeFormat } from './rateLimitRenderer.js';
 
 type Period = keyof CodexRateLimits;
-type TimeFormat = 'remaining' | 'abs';
 
 interface CodexRateLimitParams {
   id: string;
@@ -13,7 +11,7 @@ interface CodexRateLimitParams {
   prefix: string;
   color: string;
   period: Period;
-  timeFormat: TimeFormat;
+  timeFormat: RateLimitTimeFormat;
   prefixWidth?: number;
   timeExprWidth?: number;
 }
@@ -25,23 +23,16 @@ function createCodexRateLimitWidget(params: CodexRateLimitParams): Widget {
     labelKey,
     render(ctx: RenderContext, _cfg: WidgetConfig): string | null {
       const slot = ctx.codex?.rateLimits?.[period];
-      const paddedPrefix = prefixWidth != null ? prefix.padEnd(prefixWidth) : prefix;
-      if (!slot) return `${paddedPrefix} ${buildBar(0, color)} ?%`;
-
-      const remainingMs = slot.resetsAt * 1000 - ctx.now.getTime();
-      const pct = remainingMs <= 0 ? 0 : Math.round(slot.usedPercent);
-      let timeStr: string;
-      if (remainingMs <= 0) {
-        timeStr = 'reset';
-      } else if (timeFormat === 'abs') {
-        timeStr = formatAbsDatetime(slot.resetsAt);
-      } else {
-        timeStr = formatRemainingHM(remainingMs);
-      }
-
-      const timeExpr =
-        timeExprWidth != null ? `(${timeStr})`.padEnd(timeExprWidth) : `(${timeStr})`;
-      return `${paddedPrefix} ${buildBar(pct, color)} ${fmtPct(pct)} ${timeExpr}`;
+      return renderRateLimitSlot({
+        prefix,
+        color,
+        usedPercent: slot?.usedPercent ?? null,
+        resetsAtMs: slot?.resetsAt != null ? slot.resetsAt * 1000 : null,
+        now: ctx.now.getTime(),
+        timeFormat,
+        prefixWidth,
+        timeExprWidth,
+      });
     },
   };
 }

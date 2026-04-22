@@ -904,6 +904,36 @@ var GptUsageWidget = {
   }
 };
 
+// src/widgets/rateLimitRenderer.ts
+function renderRateLimitSlot(params) {
+  const {
+    prefix,
+    color,
+    usedPercent,
+    resetsAtMs,
+    now,
+    timeFormat = "remaining",
+    prefixWidth,
+    timeExprWidth
+  } = params;
+  const paddedPrefix = prefixWidth != null ? prefix.padEnd(prefixWidth) : prefix;
+  if (usedPercent == null || resetsAtMs == null) {
+    return `${paddedPrefix} ${buildBar(0, color)}  ?%`;
+  }
+  const remainingMs = resetsAtMs - now;
+  const pct = remainingMs <= 0 ? 0 : Math.round(usedPercent);
+  let timeStr;
+  if (remainingMs <= 0) {
+    timeStr = "reset";
+  } else if (timeFormat === "abs") {
+    timeStr = formatAbsDatetime(resetsAtMs / 1e3);
+  } else {
+    timeStr = formatRemainingHM(remainingMs);
+  }
+  const timeExpr = timeExprWidth != null ? `(${timeStr})`.padEnd(timeExprWidth) : `(${timeStr})`;
+  return `${paddedPrefix} ${buildBar(pct, color)} ${fmtPct(pct)} ${timeExpr}`;
+}
+
 // src/widgets/RateLimit.ts
 function createRateLimitWidget(params) {
   const { id, labelKey, prefix, color, period } = params;
@@ -912,12 +942,13 @@ function createRateLimitWidget(params) {
     labelKey,
     render(ctx, _cfg) {
       const slot = ctx.stdin.rate_limits?.[period];
-      if (slot?.used_percentage == null || !slot?.resets_at)
-        return `${prefix} ${buildBar(0, color)}  ?%`;
-      const remainingMs = slot.resets_at * 1e3 - ctx.now.getTime();
-      const pct = remainingMs <= 0 ? 0 : Math.round(slot.used_percentage);
-      const timeStr = remainingMs <= 0 ? "reset" : formatRemainingHM(remainingMs);
-      return `${prefix} ${buildBar(pct, color)} ${fmtPct(pct)} (${timeStr})`;
+      return renderRateLimitSlot({
+        prefix,
+        color,
+        usedPercent: slot?.used_percentage ?? null,
+        resetsAtMs: slot?.resets_at != null ? slot.resets_at * 1e3 : null,
+        now: ctx.now.getTime()
+      });
     }
   };
 }
@@ -959,20 +990,16 @@ function createCodexRateLimitWidget(params) {
     labelKey,
     render(ctx, _cfg) {
       const slot = ctx.codex?.rateLimits?.[period];
-      const paddedPrefix = prefixWidth != null ? prefix.padEnd(prefixWidth) : prefix;
-      if (!slot) return `${paddedPrefix} ${buildBar(0, color)} ?%`;
-      const remainingMs = slot.resetsAt * 1e3 - ctx.now.getTime();
-      const pct = remainingMs <= 0 ? 0 : Math.round(slot.usedPercent);
-      let timeStr;
-      if (remainingMs <= 0) {
-        timeStr = "reset";
-      } else if (timeFormat === "abs") {
-        timeStr = formatAbsDatetime(slot.resetsAt);
-      } else {
-        timeStr = formatRemainingHM(remainingMs);
-      }
-      const timeExpr = timeExprWidth != null ? `(${timeStr})`.padEnd(timeExprWidth) : `(${timeStr})`;
-      return `${paddedPrefix} ${buildBar(pct, color)} ${fmtPct(pct)} ${timeExpr}`;
+      return renderRateLimitSlot({
+        prefix,
+        color,
+        usedPercent: slot?.usedPercent ?? null,
+        resetsAtMs: slot?.resetsAt != null ? slot.resetsAt * 1e3 : null,
+        now: ctx.now.getTime(),
+        timeFormat,
+        prefixWidth,
+        timeExprWidth
+      });
     }
   };
 }

@@ -1,7 +1,6 @@
 import type { Widget, RenderContext, WidgetConfig } from './types.js';
 import type { I18nKey } from '../i18n/index.js';
-import { buildBar, fmtPct } from '../utils/bar.js';
-import { formatRemainingHM } from '../utils/duration.js';
+import { renderRateLimitSlot } from './rateLimitRenderer.js';
 
 interface RateLimitParams {
   id: string;
@@ -18,13 +17,13 @@ function createRateLimitWidget(params: RateLimitParams): Widget {
     labelKey,
     render(ctx: RenderContext, _cfg: WidgetConfig): string | null {
       const slot = ctx.stdin.rate_limits?.[period];
-      if (slot?.used_percentage == null || !slot?.resets_at)
-        return `${prefix} ${buildBar(0, color)}  ?%`;
-
-      const remainingMs = slot.resets_at * 1000 - ctx.now.getTime();
-      const pct = remainingMs <= 0 ? 0 : Math.round(slot.used_percentage);
-      const timeStr = remainingMs <= 0 ? 'reset' : formatRemainingHM(remainingMs);
-      return `${prefix} ${buildBar(pct, color)} ${fmtPct(pct)} (${timeStr})`;
+      return renderRateLimitSlot({
+        prefix,
+        color,
+        usedPercent: slot?.used_percentage ?? null,
+        resetsAtMs: slot?.resets_at != null ? slot.resets_at * 1000 : null,
+        now: ctx.now.getTime(),
+      });
     },
   };
 }
