@@ -1048,6 +1048,8 @@ var ClaudePeakWidget = {
 };
 
 // src/widgets/CodexRateLimit.ts
+var PREFIX_WIDTH = 3;
+var TIME_EXPR_WIDTH = 11;
 function createCodexRateLimitWidget(params) {
   const { id, labelKey, prefix, color, period, timeFormat, prefixWidth, timeExprWidth } = params;
   return {
@@ -1075,8 +1077,8 @@ var CodexRateLimitWidget = createCodexRateLimitWidget({
   color: "#ff9f43",
   period: "primary",
   timeFormat: "remaining",
-  prefixWidth: 3,
-  timeExprWidth: 11
+  prefixWidth: PREFIX_WIDTH,
+  timeExprWidth: TIME_EXPR_WIDTH
 });
 var CodexWeeklyRateLimitWidget = createCodexRateLimitWidget({
   id: "codexWeeklyRateLimit",
@@ -1085,8 +1087,8 @@ var CodexWeeklyRateLimitWidget = createCodexRateLimitWidget({
   color: "#48dbfb",
   period: "secondary",
   timeFormat: "remaining",
-  prefixWidth: 3,
-  timeExprWidth: 11
+  prefixWidth: PREFIX_WIDTH,
+  timeExprWidth: TIME_EXPR_WIDTH
 });
 
 // src/widgets/Spacer.ts
@@ -1575,10 +1577,24 @@ function WidgetEditor({ lines, onSave, onBack }) {
     setMode("view");
   };
   if (mode === "add") {
-    return /* @__PURE__ */ React5.createElement(WidgetAddMode, { firstLine, onCommit: commitFirstLine, onBack: () => setMode("view") });
+    return /* @__PURE__ */ React5.createElement(
+      WidgetAddMode,
+      {
+        firstLine,
+        onCommit: commitFirstLine,
+        onBack: () => setMode("view")
+      }
+    );
   }
   if (mode === "remove") {
-    return /* @__PURE__ */ React5.createElement(WidgetRemoveMode, { firstLine, onCommit: commitFirstLine, onBack: () => setMode("view") });
+    return /* @__PURE__ */ React5.createElement(
+      WidgetRemoveMode,
+      {
+        firstLine,
+        onCommit: commitFirstLine,
+        onBack: () => setMode("view")
+      }
+    );
   }
   const actions = [
     { label: "+ \uC704\uC82F \uCD94\uAC00", value: "add" },

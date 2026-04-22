@@ -3,6 +3,9 @@ import type { I18nKey } from '../i18n/index.js';
 import type { CodexRateLimits } from '../data/codex.js';
 import { renderRateLimitSlot, type RateLimitTimeFormat } from './rateLimitRenderer.js';
 
+const PREFIX_WIDTH = 3; // "5h " / "7d " — fixed-width prefix column
+const TIME_EXPR_WIDTH = 11; // "(2d 12h)   " — padded time expression column
+
 type Period = keyof CodexRateLimits;
 
 interface CodexRateLimitParams {
@@ -44,8 +47,8 @@ export const CodexRateLimitWidget: Widget = createCodexRateLimitWidget({
   color: '#ff9f43',
   period: 'primary',
   timeFormat: 'remaining',
-  prefixWidth: 3,
-  timeExprWidth: 11,
+  prefixWidth: PREFIX_WIDTH,
+  timeExprWidth: TIME_EXPR_WIDTH,
 });
 
 export const CodexWeeklyRateLimitWidget: Widget = createCodexRateLimitWidget({
@@ -55,6 +58,6 @@ export const CodexWeeklyRateLimitWidget: Widget = createCodexRateLimitWidget({
   color: '#48dbfb',
   period: 'secondary',
   timeFormat: 'remaining',
-  prefixWidth: 3,
-  timeExprWidth: 11,
+  prefixWidth: PREFIX_WIDTH,
+  timeExprWidth: TIME_EXPR_WIDTH,
 });
