@@ -1189,7 +1189,7 @@ var GitRepoWidget = {
     if (!topLevel) return null;
     const repo = basename(topLevel);
     const branch = gitCommand(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
-    return branch ? `\u{1F4C1} ${repo} (${branch})` : `\u{1F4C1} ${repo}`;
+    return branch ? `\u{1F4C1} ${repo}(${branch})` : `\u{1F4C1} ${repo}`;
   }
 };
 

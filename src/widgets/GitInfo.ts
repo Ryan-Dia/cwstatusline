@@ -32,6 +32,6 @@ export const GitRepoWidget: Widget = {
     if (!topLevel) return null;
     const repo = basename(topLevel);
     const branch = gitCommand(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
-    return branch ? `📁 ${repo} (${branch})` : `📁 ${repo}`;
+    return branch ? `📁 ${repo}(${branch})` : `📁 ${repo}`;
   },
 };
