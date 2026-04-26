@@ -58,7 +58,7 @@ Ask all questions in a single AskUserQuestion call:
      ```
      Daily  │ Ctx ████  31% (63K/200K) │ 5h ████  75%
      7days  │ All █      6% (6d 21h)
-     Sonnet 4.6 [high] │ 🔴 Peak │ my-repo │ main
+     Sonnet 4.6 [high] │ 🔴 Peak │ 📁 my-repo (main)
      ```
    - `plus` (5 lines, recommended): lite + spacer + cache/cost line
      preview:
@@ -67,7 +67,7 @@ Ask all questions in a single AskUserQuestion call:
      7days  │ All █      6% (6d 21h)
 
      ⚡100% │ ⏰ 1h 0m │ $1.56
-     Sonnet 4.6 [high] │ 🔴 Peak │ my-repo │ main
+     Sonnet 4.6 [high] │ 🔴 Peak │ 📁 my-repo (main)
      ```
    - `pro` (6 lines): plus + Codex CLI line
      preview:
@@ -77,7 +77,7 @@ Ask all questions in a single AskUserQuestion call:
      gpt-5.4│ 5h  ████   0% (reset)   │ 7d ████   0%
 
      ⚡100% │ ⏰ 1h 0m │ $1.56
-     Sonnet 4.6 [high] │ 🔴 Peak │ my-repo │ main
+     Sonnet 4.6 [high] │ 🔴 Peak │ 📁 my-repo (main)
      ```
 2. Theme — `default` (recommended), `dracula`, `nord`, `gruvbox`, `tokyo-night`
 3. Locale — `ko` (recommended), `en`, `zh`
@@ -95,7 +95,7 @@ Map the chosen preset to the `lines` array:
   "lines": [
     [{"id":"dailyUsage"},{"id":"context"},{"id":"rateLimit"}],
     [{"id":"weeklyUsage"},{"id":"weeklyRateLimit"}],
-    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"},{"id":"gitBranch"}]
+    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"}]
   ]
 }
 ```
@@ -108,7 +108,7 @@ Map the chosen preset to the `lines` array:
     [{"id":"weeklyUsage"},{"id":"weeklyRateLimit"}],
     [{"id":"spacer"}],
     [{"id":"cacheHit"},{"id":"cacheTtl"},{"id":"sessionCost"}],
-    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"},{"id":"gitBranch"}]
+    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"}]
   ]
 }
 ```
@@ -122,7 +122,7 @@ Map the chosen preset to the `lines` array:
     [{"id":"codexModel"},{"id":"codexRateLimit"},{"id":"codexWeeklyRateLimit"}],
     [{"id":"spacer"}],
     [{"id":"cacheHit"},{"id":"cacheTtl"},{"id":"sessionCost"}],
-    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"},{"id":"gitBranch"}]
+    [{"id":"model"},{"id":"claudePeak"},{"id":"gitRepo"}]
   ]
 }
 ```

@@ -29,6 +29,9 @@ export const GitRepoWidget: Widget = {
   render(ctx: RenderContext, _cfg: WidgetConfig): string | null {
     const cwd = ctx.stdin.cwd ?? process.cwd();
     const topLevel = gitCommand(['rev-parse', '--show-toplevel'], cwd);
-    return topLevel ? basename(topLevel) : null;
+    if (!topLevel) return null;
+    const repo = basename(topLevel);
+    const branch = gitCommand(['rev-parse', '--abbrev-ref', 'HEAD'], cwd);
+    return branch ? `📁 ${repo} (${branch})` : `📁 ${repo}`;
   },
 };

@@ -52,7 +52,7 @@ export const PRESETS: Record<string, Partial<Settings>> = {
     lines: [
       [{ id: 'dailyUsage' }, { id: 'context' }, { id: 'rateLimit' }],
       [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
-      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }, { id: 'gitBranch' }],
+      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }],
     ],
   },
   plus: {
@@ -61,7 +61,7 @@ export const PRESETS: Record<string, Partial<Settings>> = {
       [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
       [{ id: 'spacer' }],
       [{ id: 'cacheHit' }, { id: 'cacheTtl' }, { id: 'sessionCost' }],
-      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }, { id: 'gitBranch' }],
+      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }],
     ],
   },
   pro: {
@@ -71,7 +71,7 @@ export const PRESETS: Record<string, Partial<Settings>> = {
       [{ id: 'codexModel' }, { id: 'codexRateLimit' }, { id: 'codexWeeklyRateLimit' }],
       [{ id: 'spacer' }],
       [{ id: 'cacheHit' }, { id: 'cacheTtl' }, { id: 'sessionCost' }],
-      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }, { id: 'gitBranch' }],
+      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }],
     ],
   },
 };

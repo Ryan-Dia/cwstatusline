@@ -1186,7 +1186,10 @@ var GitRepoWidget = {
   render(ctx, _cfg) {
     const cwd = ctx.stdin.cwd ?? process.cwd();
     const topLevel = gitCommand(["rev-parse", "--show-toplevel"], cwd);
-    return topLevel ? basename(topLevel) : null;
+    if (!topLevel) return null;
+    const repo = basename(topLevel);
+    const branch = gitCommand(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+    return branch ? `\u{1F4C1} ${repo} (${branch})` : `\u{1F4C1} ${repo}`;
   }
 };
 
@@ -1399,7 +1402,7 @@ var PRESETS = {
     lines: [
       [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
       [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
-      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }, { id: "gitBranch" }]
+      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }]
     ]
   },
   plus: {
@@ -1408,7 +1411,7 @@ var PRESETS = {
       [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
       [{ id: "spacer" }],
       [{ id: "cacheHit" }, { id: "cacheTtl" }, { id: "sessionCost" }],
-      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }, { id: "gitBranch" }]
+      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }]
     ]
   },
   pro: {
@@ -1418,7 +1421,7 @@ var PRESETS = {
       [{ id: "codexModel" }, { id: "codexRateLimit" }, { id: "codexWeeklyRateLimit" }],
       [{ id: "spacer" }],
       [{ id: "cacheHit" }, { id: "cacheTtl" }, { id: "sessionCost" }],
-      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }, { id: "gitBranch" }]
+      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }]
     ]
   }
 };
