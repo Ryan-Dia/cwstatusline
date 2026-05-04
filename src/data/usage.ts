@@ -1,5 +1,6 @@
 import { loadAllEntries, type UsageEntry } from './jsonl.js';
 import { createTtlCache } from './cache.js';
+import { getTimeWindows } from './time.js';
 
 export interface UsageSnapshot {
   dailyTokens: number;
@@ -22,11 +23,7 @@ const cache = createTtlCache<UsageSnapshot>(30_000);
 export async function getUsageSnapshot(): Promise<UsageSnapshot> {
   return cache.get(async () => {
     const entries = await loadAllEntries();
-    const now = Date.now();
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayStartMs = todayStart.getTime();
-    const weekStartMs = now - 7 * 24 * 60 * 60 * 1000;
+    const { todayStartMs, weekStartMs } = getTimeWindows();
 
     let dailyTokens = 0;
     let weeklyTokens = 0;

@@ -1,3 +1,5 @@
+import type { Widget, RenderContext, WidgetConfig } from './types.js';
+import type { I18nKey } from '../i18n/index.js';
 import { buildBar, fmtPct } from '../utils/bar.js';
 import { formatRemainingHM, formatAbsDatetime } from '../utils/duration.js';
 
@@ -46,4 +48,36 @@ export function renderRateLimitSlot(params: RateLimitSlotParams): string {
 
   const timeExpr = timeExprWidth != null ? `(${timeStr})`.padEnd(timeExprWidth) : `(${timeStr})`;
   return `${paddedPrefix} ${buildBar(pct, color)} ${fmtPct(pct)} ${timeExpr}`;
+}
+
+interface RateLimitWidgetParams {
+  id: string;
+  labelKey: I18nKey;
+  prefix: string;
+  color: string;
+  getSlot: (ctx: RenderContext) => { usedPercent: number; resetsAt: number } | null | undefined;
+  timeFormat?: RateLimitTimeFormat;
+  prefixWidth?: number;
+  timeExprWidth?: number;
+}
+
+export function createRateLimitWidget(params: RateLimitWidgetParams): Widget {
+  const { id, labelKey, prefix, color, getSlot, timeFormat, prefixWidth, timeExprWidth } = params;
+  return {
+    id,
+    labelKey,
+    render(ctx: RenderContext, _cfg: WidgetConfig): string | null {
+      const slot = getSlot(ctx);
+      return renderRateLimitSlot({
+        prefix,
+        color,
+        usedPercent: slot?.usedPercent ?? null,
+        resetsAtMs: slot?.resetsAt != null ? slot.resetsAt * 1000 : null,
+        now: ctx.now.getTime(),
+        timeFormat,
+        prefixWidth,
+        timeExprWidth,
+      });
+    },
+  };
 }

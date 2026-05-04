@@ -4,6 +4,7 @@ import os from 'os';
 import readline from 'readline';
 import { z } from 'zod';
 import { createTtlCache } from './cache.js';
+import { getTimeWindows } from './time.js';
 
 const RateLimitSlotSchema = z.object({
   used_percent: z.number().optional().default(0),
@@ -139,11 +140,7 @@ export async function getCodexSnapshot(): Promise<CodexSnapshot> {
       return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
     }
 
-    const now = Date.now();
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const weekStart = now - 7 * 24 * 60 * 60 * 1000;
-
+    const { todayStartMs, weekStartMs } = getTimeWindows();
     let daily = 0;
     let weekly = 0;
 
@@ -156,8 +153,8 @@ export async function getCodexSnapshot(): Promise<CodexSnapshot> {
       try {
         const obj = JSON.parse(trimmed);
         const ts = obj.timestamp ? new Date(obj.timestamp).getTime() : 0;
-        if (ts >= todayStart.getTime()) daily += 1;
-        if (ts >= weekStart) weekly += 1;
+        if (ts >= todayStartMs) daily += 1;
+        if (ts >= weekStartMs) weekly += 1;
       } catch (_e) {
         // skip malformed lines
       }

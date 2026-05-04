@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
-import os from 'os';
 import { z } from 'zod';
 import { createMtimeCache } from './cache.js';
+import { getClaudeDir } from '../config/load.js';
 
 const UsageSchema = z.object({
   input_tokens: z.number().optional().default(0),
@@ -42,10 +42,6 @@ export interface UsageEntry {
 }
 
 const fileCache = createMtimeCache<UsageEntry[]>();
-
-function getClaudeDir(): string {
-  return process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), '.claude');
-}
 
 async function parseJsonlFile(filePath: string): Promise<UsageEntry[]> {
   return fileCache.get(filePath, async (p) => {
