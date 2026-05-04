@@ -164,13 +164,9 @@ Select a theme in the TUI or set `"theme"` in settings.json.
 
 | Preset | Lines | Highlights |
 |---|---|---|
-| `minimal` | 3 | `dailyUsage` + `context` + `rateLimit` / `weeklyUsage` + `weeklyRateLimit` / `model` + `claudePeak` |
-| `lite` | 3 | Like minimal + `gitRepo` on line 3 |
-| `plus` | 5 | Adds spacer row + `cacheHit`, `cacheTtl`, `sessionCost` |
-| `pro` | 6 | Like plus + Codex rate-limit row (`codexModel`, `codexRateLimit`, `codexWeeklyRateLimit`) |
-| `full` | 1 | All Claude widgets on one line |
-| `korean-dev` | 1 | Same as `full` + `locale: ko` |
-| `multi-cli` | 1 | `model` + `dailyUsage` + `gptUsage` — shows both Claude and Codex at a glance |
+| `lite` | 3 | `dailyUsage` + `context` + `rateLimit` / `weeklyUsage` + `weeklyRateLimit` / `model` + `claudePeak` + `gitRepo` |
+| `plus` | 5 | lite + spacer + `cacheHit`, `cacheTtl`, `sessionCost` row |
+| `pro` | 6 | plus + Codex row (`codexModel`, `codexRateLimit`, `codexWeeklyRateLimit`) |
 
 Apply a preset via `/festatusline:setup` in Claude Code.
 
@@ -201,25 +197,6 @@ Three locale bundles are included: `ko` (Korean), `en` (English), `zh` (Chinese)
 | `XDG_CONFIG_HOME` | `~/.config` | Settings file base path |
 | `XDG_CACHE_HOME` | `~/.cache` | Cache file base path |
 | `LANG` | — | System locale — used for auto-detection fallback |
-
----
-
-## 🛠 Development
-
-```bash
-npm run build       # Bundle to dist/
-npm run dev         # Watch mode
-npm test            # vitest unit tests
-npm run typecheck   # tsc --noEmit
-npm run lint        # ESLint (Airbnb)
-npm run format      # Prettier
-```
-
-**Data sources read at runtime:**
-
-- `~/.claude/projects/**/*.jsonl` — token usage history (mtime-cached)
-- `~/.codex/` — Codex session history, config, rate limits
-- stdin — Claude Code JSON payload (model, context, rate limits, cost, cwd)
 
 ---
 
