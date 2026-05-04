@@ -1,8 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { z } from 'zod';
 import { t } from '../i18n/index.js';
 import { getClaudeDir } from './load.js';
+
+const ClaudeSettingsSchema = z
+  .object({ statusLine: z.record(z.unknown()).optional() })
+  .catchall(z.unknown());
+
+type ClaudeSettingsFile = z.infer<typeof ClaudeSettingsSchema>;
 
 function getClaudeSettingsPath(): string {
   return path.join(getClaudeDir(), 'settings.json');
@@ -34,10 +41,11 @@ async function resolveCliPath(): Promise<string> {
 export async function installToClaude(force = false): Promise<void> {
   const settingsPath = getClaudeSettingsPath();
 
-  let current: Record<string, unknown> = {};
+  let current: ClaudeSettingsFile = {};
   try {
     const raw = await fs.promises.readFile(settingsPath, 'utf8');
-    current = JSON.parse(raw) as Record<string, unknown>;
+    const parsed = ClaudeSettingsSchema.safeParse(JSON.parse(raw));
+    if (parsed.success) current = parsed.data;
   } catch {
     // file may not exist yet
   }

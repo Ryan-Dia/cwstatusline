@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import { z } from 'zod';
+import { getClaudeDir } from '../config/load.js';
 
 const ClaudeSettingsSchema = z.object({
   effortLevel: z.string().optional(),
@@ -10,8 +10,7 @@ const ClaudeSettingsSchema = z.object({
 export type ClaudeSettings = z.infer<typeof ClaudeSettingsSchema>;
 
 export async function readClaudeSettings(): Promise<ClaudeSettings> {
-  const dir = process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), '.claude');
-  const settingsPath = path.join(dir, 'settings.json');
+  const settingsPath = path.join(getClaudeDir(), 'settings.json');
   try {
     const raw = await fs.promises.readFile(settingsPath, 'utf8');
     const result = ClaudeSettingsSchema.safeParse(JSON.parse(raw));
