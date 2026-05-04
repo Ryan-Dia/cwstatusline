@@ -94,7 +94,7 @@ Settings are stored at `~/.config/festatusline/settings.json` (respects `$XDG_CO
 `lines` is an array of rows — each row is rendered as a separate output line.  
 Each widget entry can include an optional `"color": "#hexcode"` override.
 
-Edit manually or run `npx festatusline` to open the TUI.
+Edit manually or use `/festatusline:setup` in Claude Code to reconfigure.
 
 ---
 
@@ -172,7 +172,7 @@ Select a theme in the TUI or set `"theme"` in settings.json.
 | `korean-dev` | 1 | Same as `full` + `locale: ko` |
 | `multi-cli` | 1 | `model` + `dailyUsage` + `gptUsage` — shows both Claude and Codex at a glance |
 
-Apply a preset via TUI (`Select Preset`) or `npx festatusline setup`.
+Apply a preset via `/festatusline:setup` in Claude Code.
 
 ---
 
