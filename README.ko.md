@@ -61,17 +61,17 @@
 ## 🎨 데모
 
 ```
-Daily   │ Ctx ■■■■■■■■■■  23% (47K/200K)  │ 5h ■■■■■■■■■■  29% (95163d 12h)
-7days   │ All ■■■■■■■■■■  25% (95163d 12h)
+Daily   │ Ctx ■■■■■■■■■■  23% (47K/200K)  │ 5h ■■■■■■■■■■  29% (2h 0m)
+7days   │ All ■■■■■■■■■■  25% (4d 0h)
 gpt-5.5 │ 5h  ■■■■■■■■■■   0% (reset)     │ 7d  ■■■■■■■■■■  10% (1d 1h)
 
 ⚡74% │ ⏱ 1h 0m │ $0.0042
-Sonnet 4.6 [high] │ 🟢 Off-Peak (7h 55m) │ 📁 festatusline(main)
+Sonnet 4.6 [high] │ 🟢 Off-Peak (7h 46m) │ 📁 festatusline(main)
 ```
 
 > 재현: `npm run build && cat test/data/sample-stdin.json | node dist/cli.js`
 
-실제 출력에는 트루컬러 ANSI 색상이 적용됩니다 (밝음/어두움 바, 강조 텍스트). 프리셋과 로케일에 따라 결과가 달라집니다. `95163d` 리셋 시간은 픽스처의 `resets_at: 9999999999` 목업값 때문입니다.
+실제 출력에는 트루컬러 ANSI 색상이 적용됩니다 (밝음/어두움 바, 강조 텍스트). 프리셋과 로케일에 따라 결과가 달라집니다.
 
 ---
 

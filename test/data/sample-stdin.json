@@ -23,11 +23,11 @@
   "rate_limits": {
     "five_hour": {
       "used_percentage": 29,
-      "resets_at": 9999999999
+      "resets_at": 1777878820
     },
     "seven_day": {
       "used_percentage": 25,
-      "resets_at": 9999999999
+      "resets_at": 1778217220
     }
   },
   "workspace": {
