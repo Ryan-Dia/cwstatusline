@@ -69,8 +69,6 @@ gpt-5.5 │ 5h  ■■■■■■■■■■   0% (reset)     │ 7d  ■■�
 Sonnet 4.6 [high] │ 🟢 Off-Peak (7h 46m) │ 📁 festatusline(main)
 ```
 
-> Reproduce: `npm run build && cat test/data/sample-stdin.json | node dist/cli.js`
-
 Colors are rendered with truecolor ANSI — dim/bright bars, accent text. Output varies by preset and locale.
 
 ---
