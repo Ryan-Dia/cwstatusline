@@ -2,7 +2,6 @@
 
 **English** | [한국어](./README.ko.md)
 
-[![npm version](https://img.shields.io/npm/v/festatusline)](https://www.npmjs.com/package/festatusline)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Node ≥18](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 [![i18n](https://img.shields.io/badge/i18n-ko%20%7C%20en%20%7C%20zh-orange)](./README.ko.md)
