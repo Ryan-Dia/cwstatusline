@@ -61,17 +61,17 @@ The setup command writes the following into `~/.claude/settings.json`:
 ## 🎨 Demo
 
 ```
-Daily   │ Ctx ■■□□□□□□□□  23% (47K/200K)   │ 5h ■■■□□□□□□□  29% (2h 14m)
-7days   │ All ■■■□□□□□□□  25% (6d 10h)
-gpt-5.5 │ 5h  ■□□□□□□□□□   0% (reset)      │ 7d  ■□□□□□□□□□  10% (1d 1h)
-        (spacer)
-⚡74%  │ ⏱ 1h 0m │ $0.0042
-Sonnet 4.6 │ 🟢 Off-Peak (8h 6m) │ 📁 festatusline(main)
+Daily   │ Ctx ■■■■■■■■■■  23% (47K/200K)  │ 5h ■■■■■■■■■■  29% (95163d 12h)
+7days   │ All ■■■■■■■■■■  25% (95163d 12h)
+gpt-5.5 │ 5h  ■■■■■■■■■■   0% (reset)     │ 7d  ■■■■■■■■■■  10% (1d 1h)
+
+⚡74% │ ⏱ 1h 0m │ $0.0042
+Sonnet 4.6 [high] │ 🟢 Off-Peak (7h 55m) │ 📁 festatusline(main)
 ```
 
-> Reproduce locally: `npm run build && cat test/data/sample-stdin.json | node dist/cli.js`
+> Reproduce: `npm run build && cat test/data/sample-stdin.json | node dist/cli.js`
 
-Colors are rendered with truecolor ANSI. Output varies by active preset and locale.
+Colors are rendered with truecolor ANSI — dim/bright bars, accent text. Output varies by preset and locale. The large reset time (`95163d`) is an artifact of the mock fixture's far-future `resets_at`.
 
 ---
 
