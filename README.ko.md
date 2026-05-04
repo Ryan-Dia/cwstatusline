@@ -17,39 +17,40 @@
 - **다국어 지원** — 한국어·영어·중국어를 `FESTATUSLINE_LOCALE` 또는 `$LANG` 으로 자동 감지
 - **5종 테마 내장** — default, dracula, nord, gruvbox, tokyo-night
 - **22개 위젯** — Claude 사용량, Codex CLI, Git 정보, 피크 시간, 세션 비용, 캐시 통계
-- **한국 개발자 친화** — KST 기준 피크 시간대(22:00–04:00), Sonnet 주간 사용량 트래커
 - **Codex CLI 통합** — `~/.codex` 파싱으로 GPT 요청 수·레이트 리밋·모델 표시
-- **7종 프리셋 + 인터랙티브 TUI** — 수 초 만에 제로 설정 완료
+- **7종 프리셋 + 인터랙티브 셋업** — `/festatusline:setup` 으로 제로 설정 완료
 - **Node ≥18 전용** — Bun API 미사용
 
 ---
 
 ## 🚀 빠른 시작
 
-```bash
-# Claude Code 에 자동 등록 (~/.claude/settings.json 에 statusLine 필드 작성)
-npx festatusline install
+**Claude Code 플러그인으로 설치:**
 
-# 인터랙티브 TUI 설정 화면
-npx festatusline
-
-# 최초 셋업 위저드 (언어 + 프리셋 선택)
-npx festatusline setup
-
-# 데이터 경로 진단
-npx festatusline doctor
+```
+/plugin install festatusline
 ```
 
-`install` 실행 후에는 Claude Code 프롬프트마다 상태바가 자동으로 표시됩니다.  
-경로가 바뀌었을 때는 `install --force` 로 덮어쓸 수 있습니다.
+**인터랙티브 셋업** (프리셋·테마·언어 선택 → statusLine 자동 등록):
 
-**`~/.claude/settings.json` 에 기록되는 내용:**
+```
+/festatusline:setup
+```
+
+**플러그인 업그레이드 후** 경로 갱신:
+
+```
+/plugin update festatusline
+/festatusline:update
+```
+
+셋업 후 `~/.claude/settings.json` 에 기록되는 내용:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "node /path/to/dist/cli.js",
+    "command": "node ~/.claude/plugins/cache/festatusline/festatusline/<version>/dist/cli.js",
     "refreshIntervalMs": 60000
   }
 }

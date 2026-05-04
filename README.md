@@ -17,38 +17,40 @@ Inspired by [ccstatusline](https://github.com/sirmalloc/ccstatusline).
 - **Multilingual** — Korean, English, Chinese auto-detected from `FESTATUSLINE_LOCALE` or `$LANG`
 - **5 Built-in themes** — default, dracula, nord, gruvbox, tokyo-night
 - **22 widgets** — Claude usage, Codex CLI, Git info, peak-time, session cost, cache stats
-- **Korean developer-friendly** — KST peak hours (22:00–04:00), Sonnet weekly quota tracker
 - **Codex CLI integration** — reads `~/.codex` for GPT request counts, rate limits, and model
-- **7 Presets + interactive TUI** — zero-config setup in seconds
+- **7 Presets + interactive setup** — zero-config via `/festatusline:setup`
 - **Node ≥18 only** — no Bun dependency
 
 ---
 
 ## 🚀 Quick Start
 
-```bash
-# Auto-register into Claude Code (~/.claude/settings.json)
-npx festatusline install
+**Install as a Claude Code plugin:**
 
-# Open interactive TUI settings
-npx festatusline
-
-# First-run wizard (pick language + preset)
-npx festatusline setup
-
-# Diagnose data paths
-npx festatusline doctor
+```
+/plugin install festatusline
 ```
 
-After `install`, Claude Code injects the statusline on every prompt. To update the path later, run `install --force`.
+**Run interactive setup** (pick preset, theme, locale — registers the statusline automatically):
 
-**What gets written to `~/.claude/settings.json`:**
+```
+/festatusline:setup
+```
+
+**After upgrading the plugin**, update the registered path:
+
+```
+/plugin update festatusline
+/festatusline:update
+```
+
+The setup command writes the following into `~/.claude/settings.json`:
 
 ```json
 {
   "statusLine": {
     "type": "command",
-    "command": "node /path/to/dist/cli.js",
+    "command": "node ~/.claude/plugins/cache/festatusline/festatusline/<version>/dist/cli.js",
     "refreshIntervalMs": 60000
   }
 }
