@@ -114,6 +114,31 @@ async function readLastRateLimits(filePath: string): Promise<CodexRateLimits | n
   return last;
 }
 
+async function countSessionFiles(sessionsDir: string): Promise<{ daily: number; weekly: number }> {
+  const { todayStartMs, weekStartMs } = getTimeWindows();
+  let daily = 0;
+  let weekly = 0;
+  try {
+    for (const year of await fs.promises.readdir(sessionsDir)) {
+      if (!/^\d{4}$/.test(year)) continue;
+      for (const month of await fs.promises.readdir(path.join(sessionsDir, year))) {
+        for (const day of await fs.promises.readdir(path.join(sessionsDir, year, month))) {
+          const dayMs = new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+          if (dayMs + 86_400_000 <= weekStartMs) continue;
+          const files = (
+            await fs.promises.readdir(path.join(sessionsDir, year, month, day))
+          ).filter((f) => f.endsWith('.jsonl')).length;
+          if (dayMs >= todayStartMs) daily += files;
+          weekly += files;
+        }
+      }
+    }
+  } catch {
+    // sessions dir not accessible
+  }
+  return { daily, weekly };
+}
+
 const codexCache = createTtlCache<CodexSnapshot>(30_000);
 
 export async function getCodexSnapshot(): Promise<CodexSnapshot> {
@@ -137,7 +162,8 @@ export async function getCodexSnapshot(): Promise<CodexSnapshot> {
     const rateLimits = latestSession ? await readLastRateLimits(latestSession) : null;
 
     if (stat.isDirectory()) {
-      return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
+      const { daily, weekly } = await countSessionFiles(histPath);
+      return { available: true, dailyRequests: daily, weeklyRequests: weekly, rateLimits, model };
     }
 
     const { todayStartMs, weekStartMs } = getTimeWindows();
