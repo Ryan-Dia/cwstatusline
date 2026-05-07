@@ -1,24 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computePeakTime } from "../src/data/peak-time.js";
 import { getDailyReset, getWeeklyReset } from "../src/data/reset.js";
-
-describe("computePeakTime", () => {
-  it("returns null when no entries", () => {
-    expect(computePeakTime([])).toBeNull();
-  });
-
-  it("finds peak hour", () => {
-    const base = Date.now() - 60 * 60 * 1000;
-    const hour = new Date(base).getHours();
-    const entries = [
-      { timestamp: base, model: "claude-sonnet", inputTokens: 5000, outputTokens: 1000, cacheCreationTokens: 0, cacheReadTokens: 0 },
-      { timestamp: base - 3600_000, model: "claude-sonnet", inputTokens: 100, outputTokens: 100, cacheCreationTokens: 0, cacheReadTokens: 0 },
-    ];
-    const result = computePeakTime(entries);
-    expect(result).not.toBeNull();
-    expect(result?.hour).toBe(hour);
-  });
-});
 
 describe("getDailyReset", () => {
   it("returns a label with hh:mm format", () => {

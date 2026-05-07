@@ -1,7 +1,6 @@
 import type { Widget } from './types.js';
 import { ModelWidget } from './Model.js';
 import { ContextWidget } from './Context.js';
-import { PeakTimeWidget } from './PeakTime.js';
 import { DailyUsageWidget } from './DailyUsage.js';
 import { DailyResetTimerWidget } from './DailyResetTimer.js';
 import { WeeklyUsageWidget } from './WeeklyUsage.js';
@@ -10,7 +9,6 @@ import { SonnetWeeklyUsageWidget } from './SonnetWeeklyUsage.js';
 import { SonnetWeeklyResetTimerWidget } from './SonnetWeeklyResetTimer.js';
 import { GptUsageWidget } from './GptUsage.js';
 import { RateLimitWidget, WeeklyRateLimitWidget } from './RateLimit.js';
-import { ClaudePeakWidget } from './ClaudePeak.js';
 import { CodexRateLimitWidget, CodexWeeklyRateLimitWidget } from './CodexRateLimit.js';
 import { SpacerWidget } from './Spacer.js';
 import { CodexModelWidget } from './CodexModel.js';
@@ -24,7 +22,6 @@ export const ALL_WIDGETS: Widget[] = [
   ContextWidget,
   RateLimitWidget,
   WeeklyRateLimitWidget,
-  PeakTimeWidget,
   DailyUsageWidget,
   DailyResetTimerWidget,
   WeeklyUsageWidget,
@@ -32,7 +29,6 @@ export const ALL_WIDGETS: Widget[] = [
   SonnetWeeklyUsageWidget,
   SonnetWeeklyResetTimerWidget,
   GptUsageWidget,
-  ClaudePeakWidget,
   CodexRateLimitWidget,
   CodexWeeklyRateLimitWidget,
   SpacerWidget,

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // src/cli.ts
-import chalk4 from "chalk";
+import chalk3 from "chalk";
 
 // src/render/index.ts
 import { promises as fs6 } from "fs";
@@ -88,11 +88,10 @@ async function readStdin() {
 }
 
 // src/data/jsonl.ts
-import fs2 from "fs";
-import path from "path";
+import fs3 from "fs";
+import path2 from "path";
 import readline from "readline";
-import os from "os";
-import { z as z2 } from "zod";
+import { z as z3 } from "zod";
 
 // src/data/cache.ts
 import { promises as fs } from "fs";
@@ -130,34 +129,72 @@ function createMtimeCache() {
   };
 }
 
+// src/config/load.ts
+import fs2 from "fs";
+import path from "path";
+import os from "os";
+
+// src/config/schema.ts
+import { z as z2 } from "zod";
+var WidgetConfigSchema = z2.object({
+  id: z2.string(),
+  color: z2.string().optional()
+});
+var SettingsSchema = z2.object({
+  lines: z2.array(z2.array(WidgetConfigSchema)).default([
+    [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
+    [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
+    [{ id: "model" }]
+  ]),
+  theme: z2.string().default("default"),
+  locale: z2.enum(["ko", "en", "zh"]).default("en"),
+  weeklyAnchorDay: z2.number().min(0).max(6).nullable().default(null),
+  separator: z2.string().default(" \u2502 ")
+});
+
+// src/config/load.ts
+function getClaudeDir() {
+  return process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
+}
+function getConfigPath() {
+  const dir = process.env.XDG_CONFIG_HOME ?? path.join(os.homedir(), ".config");
+  return path.join(dir, "festatusline", "settings.json");
+}
+async function loadSettings() {
+  const configPath = getConfigPath();
+  try {
+    const raw = await fs2.promises.readFile(configPath, "utf8");
+    return SettingsSchema.parse(JSON.parse(raw));
+  } catch {
+    return SettingsSchema.parse({});
+  }
+}
+
 // src/data/jsonl.ts
-var UsageSchema = z2.object({
-  input_tokens: z2.number().optional().default(0),
-  output_tokens: z2.number().optional().default(0),
-  cache_creation_input_tokens: z2.number().optional().default(0),
-  cache_read_input_tokens: z2.number().optional().default(0),
-  cache_creation: z2.object({
-    ephemeral_5m_input_tokens: z2.number().optional().default(0),
-    ephemeral_1h_input_tokens: z2.number().optional().default(0)
+var UsageSchema = z3.object({
+  input_tokens: z3.number().optional().default(0),
+  output_tokens: z3.number().optional().default(0),
+  cache_creation_input_tokens: z3.number().optional().default(0),
+  cache_read_input_tokens: z3.number().optional().default(0),
+  cache_creation: z3.object({
+    ephemeral_5m_input_tokens: z3.number().optional().default(0),
+    ephemeral_1h_input_tokens: z3.number().optional().default(0)
   }).optional()
 });
-var JsonlLineSchema = z2.object({
-  timestamp: z2.string().optional(),
-  model: z2.string().optional(),
-  message: z2.object({
-    model: z2.string().optional(),
+var JsonlLineSchema = z3.object({
+  timestamp: z3.string().optional(),
+  model: z3.string().optional(),
+  message: z3.object({
+    model: z3.string().optional(),
     usage: UsageSchema.optional()
   }).optional(),
   usage: UsageSchema.optional()
 });
 var fileCache = createMtimeCache();
-function getClaudeDir() {
-  return process.env.CLAUDE_CONFIG_DIR ?? path.join(os.homedir(), ".claude");
-}
 async function parseJsonlFile(filePath) {
   return fileCache.get(filePath, async (p) => {
     const entries = [];
-    const stream = fs2.createReadStream(p, { encoding: "utf8" });
+    const stream = fs3.createReadStream(p, { encoding: "utf8" });
     const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
     for await (const line of rl) {
       const trimmed = line.trim();
@@ -189,27 +226,27 @@ async function parseJsonlFile(filePath) {
   });
 }
 async function loadAllEntries() {
-  const projectsDir = path.join(getClaudeDir(), "projects");
+  const projectsDir = path2.join(getClaudeDir(), "projects");
   let projectDirs;
   try {
-    projectDirs = await fs2.promises.readdir(projectsDir);
+    projectDirs = await fs3.promises.readdir(projectsDir);
   } catch {
     return [];
   }
   const all = [];
   await Promise.all(
     projectDirs.map(async (dir) => {
-      const dirPath = path.join(projectsDir, dir);
+      const dirPath = path2.join(projectsDir, dir);
       let files;
       try {
-        files = await fs2.promises.readdir(dirPath);
+        files = await fs3.promises.readdir(dirPath);
       } catch {
         return;
       }
       const jsonlFiles = files.filter((f) => f.endsWith(".jsonl"));
       await Promise.all(
         jsonlFiles.map(async (file) => {
-          const entries = await parseJsonlFile(path.join(dirPath, file));
+          const entries = await parseJsonlFile(path2.join(dirPath, file));
           all.push(...entries);
         })
       );
@@ -230,6 +267,14 @@ async function getLastCacheCreation() {
   return { timestamp: latest.timestamp, ttlMs };
 }
 
+// src/data/time.ts
+function getTimeWindows() {
+  const now = Date.now();
+  const todayStart = /* @__PURE__ */ new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  return { now, todayStartMs: todayStart.getTime(), weekStartMs: now - 7 * 24 * 60 * 60 * 1e3 };
+}
+
 // src/data/usage.ts
 function totalTokens(e) {
   return e.inputTokens + e.outputTokens + e.cacheCreationTokens + e.cacheReadTokens;
@@ -241,11 +286,7 @@ var cache = createTtlCache(3e4);
 async function getUsageSnapshot() {
   return cache.get(async () => {
     const entries = await loadAllEntries();
-    const now = Date.now();
-    const todayStart = /* @__PURE__ */ new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayStartMs = todayStart.getTime();
-    const weekStartMs = now - 7 * 24 * 60 * 60 * 1e3;
+    const { todayStartMs, weekStartMs } = getTimeWindows();
     let dailyTokens = 0;
     let weeklyTokens = 0;
     let sonnetWeeklyTokens = 0;
@@ -268,31 +309,31 @@ async function getUsageSnapshot() {
 }
 
 // src/data/codex.ts
-import fs3 from "fs";
-import path2 from "path";
+import fs4 from "fs";
+import path3 from "path";
 import os2 from "os";
 import readline2 from "readline";
-import { z as z3 } from "zod";
-var RateLimitSlotSchema = z3.object({
-  used_percent: z3.number().optional().default(0),
-  resets_at: z3.number()
+import { z as z4 } from "zod";
+var RateLimitSlotSchema = z4.object({
+  used_percent: z4.number().optional().default(0),
+  resets_at: z4.number()
 });
-var CodexEventSchema = z3.object({
-  type: z3.literal("event_msg"),
-  payload: z3.object({
-    type: z3.literal("token_count"),
-    rate_limits: z3.object({
+var CodexEventSchema = z4.object({
+  type: z4.literal("event_msg"),
+  payload: z4.object({
+    type: z4.literal("token_count"),
+    rate_limits: z4.object({
       primary: RateLimitSlotSchema,
       secondary: RateLimitSlotSchema
     })
   })
 });
 function getCodexDir() {
-  return process.env.CODEX_CONFIG_DIR ?? path2.join(os2.homedir(), ".codex");
+  return process.env.CODEX_CONFIG_DIR ?? path3.join(os2.homedir(), ".codex");
 }
 async function readCodexModel() {
   try {
-    const raw = await fs3.promises.readFile(path2.join(getCodexDir(), "config.toml"), "utf8");
+    const raw = await fs4.promises.readFile(path3.join(getCodexDir(), "config.toml"), "utf8");
     const match = raw.match(/^model\s*=\s*"([^"]+)"/m);
     return match?.[1] ?? null;
   } catch {
@@ -301,10 +342,10 @@ async function readCodexModel() {
 }
 async function findHistoryFile() {
   const base = getCodexDir();
-  const candidates = [path2.join(base, "history.jsonl"), path2.join(base, "sessions")];
+  const candidates = [path3.join(base, "history.jsonl"), path3.join(base, "sessions")];
   for (const c of candidates) {
     try {
-      await fs3.promises.access(c);
+      await fs4.promises.access(c);
       return c;
     } catch {
       continue;
@@ -313,17 +354,17 @@ async function findHistoryFile() {
   return null;
 }
 async function findLatestSessionFile() {
-  const sessionsDir = path2.join(getCodexDir(), "sessions");
+  const sessionsDir = path3.join(getCodexDir(), "sessions");
   try {
-    const years = (await fs3.promises.readdir(sessionsDir)).filter((y) => /^\d{4}$/.test(y)).sort().reverse();
+    const years = (await fs4.promises.readdir(sessionsDir)).filter((y) => /^\d{4}$/.test(y)).sort().reverse();
     for (const year of years) {
-      const months = (await fs3.promises.readdir(path2.join(sessionsDir, year))).sort().reverse();
+      const months = (await fs4.promises.readdir(path3.join(sessionsDir, year))).sort().reverse();
       for (const month of months) {
-        const days = (await fs3.promises.readdir(path2.join(sessionsDir, year, month))).sort().reverse();
+        const days = (await fs4.promises.readdir(path3.join(sessionsDir, year, month))).sort().reverse();
         for (const day of days) {
-          const dayDir = path2.join(sessionsDir, year, month, day);
-          const files = (await fs3.promises.readdir(dayDir)).filter((f) => f.endsWith(".jsonl")).sort().reverse();
-          if (files.length > 0) return path2.join(dayDir, files[0]);
+          const dayDir = path3.join(sessionsDir, year, month, day);
+          const files = (await fs4.promises.readdir(dayDir)).filter((f) => f.endsWith(".jsonl")).sort().reverse();
+          if (files.length > 0) return path3.join(dayDir, files[0]);
         }
       }
     }
@@ -332,7 +373,7 @@ async function findLatestSessionFile() {
   return null;
 }
 async function readLastRateLimits(filePath) {
-  const stream = fs3.createReadStream(filePath, { encoding: "utf8" });
+  const stream = fs4.createReadStream(filePath, { encoding: "utf8" });
   const rl = readline2.createInterface({ input: stream, crlfDelay: Infinity });
   let last = null;
   for await (const line of rl) {
@@ -351,6 +392,27 @@ async function readLastRateLimits(filePath) {
   }
   return last;
 }
+async function countSessionFiles(sessionsDir) {
+  const { todayStartMs, weekStartMs } = getTimeWindows();
+  let daily = 0;
+  let weekly = 0;
+  try {
+    for (const year of await fs4.promises.readdir(sessionsDir)) {
+      if (!/^\d{4}$/.test(year)) continue;
+      for (const month of await fs4.promises.readdir(path3.join(sessionsDir, year))) {
+        for (const day of await fs4.promises.readdir(path3.join(sessionsDir, year, month))) {
+          const dayMs = new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+          if (dayMs + 864e5 <= weekStartMs) continue;
+          const files = (await fs4.promises.readdir(path3.join(sessionsDir, year, month, day))).filter((f) => f.endsWith(".jsonl")).length;
+          if (dayMs >= todayStartMs) daily += files;
+          weekly += files;
+        }
+      }
+    }
+  } catch {
+  }
+  return { daily, weekly };
+}
 var codexCache = createTtlCache(3e4);
 async function getCodexSnapshot() {
   return codexCache.get(async () => {
@@ -365,21 +427,19 @@ async function getCodexSnapshot() {
       };
     }
     const [stat, latestSession, model] = await Promise.all([
-      fs3.promises.stat(histPath),
+      fs4.promises.stat(histPath),
       findLatestSessionFile(),
       readCodexModel()
     ]);
     const rateLimits = latestSession ? await readLastRateLimits(latestSession) : null;
     if (stat.isDirectory()) {
-      return { available: true, dailyRequests: 0, weeklyRequests: 0, rateLimits, model };
+      const { daily: daily2, weekly: weekly2 } = await countSessionFiles(histPath);
+      return { available: true, dailyRequests: daily2, weeklyRequests: weekly2, rateLimits, model };
     }
-    const now = Date.now();
-    const todayStart = /* @__PURE__ */ new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const weekStart = now - 7 * 24 * 60 * 60 * 1e3;
+    const { todayStartMs, weekStartMs } = getTimeWindows();
     let daily = 0;
     let weekly = 0;
-    const stream = fs3.createReadStream(histPath, { encoding: "utf8" });
+    const stream = fs4.createReadStream(histPath, { encoding: "utf8" });
     const rl = readline2.createInterface({ input: stream, crlfDelay: Infinity });
     for await (const line of rl) {
       const trimmed = line.trim();
@@ -387,8 +447,8 @@ async function getCodexSnapshot() {
       try {
         const obj = JSON.parse(trimmed);
         const ts = obj.timestamp ? new Date(obj.timestamp).getTime() : 0;
-        if (ts >= todayStart.getTime()) daily += 1;
-        if (ts >= weekStart) weekly += 1;
+        if (ts >= todayStartMs) daily += 1;
+        if (ts >= weekStartMs) weekly += 1;
       } catch (_e) {
       }
     }
@@ -397,63 +457,20 @@ async function getCodexSnapshot() {
 }
 
 // src/data/claude-settings.ts
-import fs4 from "fs";
-import path3 from "path";
-import os3 from "os";
-import { z as z4 } from "zod";
-var ClaudeSettingsSchema = z4.object({
-  effortLevel: z4.string().optional()
+import fs5 from "fs";
+import path4 from "path";
+import { z as z5 } from "zod";
+var ClaudeSettingsSchema = z5.object({
+  effortLevel: z5.string().optional()
 });
 async function readClaudeSettings() {
-  const dir = process.env.CLAUDE_CONFIG_DIR ?? path3.join(os3.homedir(), ".claude");
-  const settingsPath = path3.join(dir, "settings.json");
+  const settingsPath = path4.join(getClaudeDir(), "settings.json");
   try {
-    const raw = await fs4.promises.readFile(settingsPath, "utf8");
+    const raw = await fs5.promises.readFile(settingsPath, "utf8");
     const result = ClaudeSettingsSchema.safeParse(JSON.parse(raw));
     return result.success ? result.data : {};
   } catch {
     return {};
-  }
-}
-
-// src/config/load.ts
-import fs5 from "fs";
-import path4 from "path";
-import os4 from "os";
-
-// src/config/schema.ts
-import { z as z5 } from "zod";
-var WidgetConfigSchema = z5.object({
-  id: z5.string(),
-  color: z5.string().optional()
-});
-var SettingsSchema = z5.object({
-  lines: z5.array(z5.array(WidgetConfigSchema)).default([
-    [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
-    [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
-    [{ id: "model" }, { id: "claudePeak" }]
-  ]),
-  theme: z5.string().default("default"),
-  locale: z5.enum(["ko", "en", "zh"]).default("en"),
-  weeklyAnchorDay: z5.number().min(0).max(6).nullable().default(null),
-  separator: z5.string().default(" \u2502 ")
-});
-
-// src/config/load.ts
-function getClaudeDir2() {
-  return process.env.CLAUDE_CONFIG_DIR ?? path4.join(os4.homedir(), ".claude");
-}
-function getConfigPath() {
-  const dir = process.env.XDG_CONFIG_HOME ?? path4.join(os4.homedir(), ".config");
-  return path4.join(dir, "festatusline", "settings.json");
-}
-async function loadSettings() {
-  const configPath = getConfigPath();
-  try {
-    const raw = await fs5.promises.readFile(configPath, "utf8");
-    return SettingsSchema.parse(JSON.parse(raw));
-  } catch {
-    return SettingsSchema.parse({});
   }
 }
 
@@ -521,7 +538,6 @@ function getTheme(name) {
 var ko = {
   "widget.model": "\uBAA8\uB378",
   "widget.context": "\uCEE8\uD14D\uC2A4\uD2B8",
-  "widget.peakTime": "\uD53C\uD06C \uC2DC\uAC04\uB300",
   "widget.dailyUsage": "\uC77C\uAC04 \uC0AC\uC6A9\uB7C9",
   "widget.dailyReset": "\uC77C\uAC04 \uCD08\uAE30\uD654",
   "widget.weeklyUsage": "\uC8FC\uAC04 \uC0AC\uC6A9\uB7C9",
@@ -538,14 +554,12 @@ var ko = {
   "widget.sessionCost": "\uC138\uC158 \uBE44\uC6A9",
   "widget.cacheHit": "\uCE90\uC2DC \uC801\uC911\uB960",
   "widget.cacheTtl": "\uCE90\uC2DC \uC720\uD6A8\uC2DC\uAC04",
-  "widget.claudePeak": "\uD074\uB85C\uB4DC \uD53C\uD06C",
   "widget.gitBranch": "Git \uBE0C\uB79C\uCE58",
   "widget.gitRepo": "Git \uB808\uD3EC",
   "reset.until": "\uAE4C\uC9C0",
   "reset.na": "\u2013",
   "usage.tokens": "\uD1A0\uD070",
   "usage.cost": "\uBE44\uC6A9",
-  "peak.none": "\uB370\uC774\uD130 \uC5C6\uC74C",
   "tui.title": "festatusline \uC124\uC815",
   "tui.mainMenu.editWidgets": "\uC704\uC82F \uD3B8\uC9D1",
   "tui.mainMenu.selectPreset": "\uD504\uB9AC\uC14B \uC120\uD0DD",
@@ -577,7 +591,6 @@ var ko = {
 var en = {
   "widget.model": "Model",
   "widget.context": "Context",
-  "widget.peakTime": "Peak Time",
   "widget.dailyUsage": "Daily Usage",
   "widget.dailyReset": "Daily Reset",
   "widget.weeklyUsage": "Weekly Usage",
@@ -594,14 +607,12 @@ var en = {
   "widget.sessionCost": "Session Cost",
   "widget.cacheHit": "Cache Hit",
   "widget.cacheTtl": "Cache TTL",
-  "widget.claudePeak": "Claude Peak",
   "widget.gitBranch": "Git Branch",
   "widget.gitRepo": "Git Repo",
   "reset.until": "until reset",
   "reset.na": "\u2013",
   "usage.tokens": "tokens",
   "usage.cost": "cost",
-  "peak.none": "no data",
   "tui.title": "festatusline Settings",
   "tui.mainMenu.editWidgets": "Edit Widgets",
   "tui.mainMenu.selectPreset": "Select Preset",
@@ -633,7 +644,6 @@ var en = {
 var zh = {
   "widget.model": "\u6A21\u578B",
   "widget.context": "\u4E0A\u4E0B\u6587",
-  "widget.peakTime": "\u9AD8\u5CF0\u65F6\u6BB5",
   "widget.dailyUsage": "\u65E5\u7528\u91CF",
   "widget.dailyReset": "\u65E5\u91CD\u7F6E",
   "widget.weeklyUsage": "\u5468\u7528\u91CF",
@@ -650,14 +660,12 @@ var zh = {
   "widget.sessionCost": "\u4F1A\u8BDD\u8D39\u7528",
   "widget.cacheHit": "\u7F13\u5B58\u547D\u4E2D\u7387",
   "widget.cacheTtl": "\u7F13\u5B58\u6709\u6548\u671F",
-  "widget.claudePeak": "Claude\u9AD8\u5CF0",
   "widget.gitBranch": "Git \u5206\u652F",
   "widget.gitRepo": "Git \u4ED3\u5E93",
   "reset.until": "\u91CD\u7F6E\u5012\u8BA1\u65F6",
   "reset.na": "\u2013",
   "usage.tokens": "\u4EE4\u724C",
   "usage.cost": "\u8D39\u7528",
-  "peak.none": "\u65E0\u6570\u636E",
   "tui.title": "festatusline \u8BBE\u7F6E",
   "tui.mainMenu.editWidgets": "\u7F16\u8F91\u7EC4\u4EF6",
   "tui.mainMenu.selectPreset": "\u9009\u62E9\u9884\u8BBE",
@@ -707,7 +715,7 @@ function createTranslator(locale) {
 }
 
 // src/render/line.ts
-import chalk3 from "chalk";
+import chalk2 from "chalk";
 
 // src/widgets/Model.ts
 var EFFORT_LABELS = {
@@ -785,65 +793,6 @@ var ContextWidget = {
     const pct = Math.round(cw.used_percentage ?? Math.min(100, used / max * 100));
     const tokenExpr = `(${formatTokens(used)}/${formatTokens(max)})`.padEnd(11);
     return `Ctx ${buildBar(pct, "#22d3ee")} ${fmtPct(pct)} ${tokenExpr}`;
-  }
-};
-
-// src/data/peak-time.ts
-function getClaudePeakInfo(now = Date.now()) {
-  const d = new Date(now);
-  const utcSecsOfDay = d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds();
-  const utcMsOfDay = utcSecsOfDay * 1e3 + d.getUTCMilliseconds();
-  const peakStartMs = 13 * 3600 * 1e3;
-  const peakEndMs = 19 * 3600 * 1e3;
-  const dayMs = 24 * 3600 * 1e3;
-  const isPeak = utcMsOfDay >= peakStartMs && utcMsOfDay < peakEndMs;
-  let remainingMs;
-  if (isPeak) {
-    remainingMs = peakEndMs - utcMsOfDay;
-  } else if (utcMsOfDay < peakStartMs) {
-    remainingMs = peakStartMs - utcMsOfDay;
-  } else {
-    remainingMs = dayMs - utcMsOfDay + peakStartMs;
-  }
-  return { isPeak, remainingMs };
-}
-function computePeakTime(entries, windowDays = 14) {
-  const cutoff = Date.now() - windowDays * 24 * 60 * 60 * 1e3;
-  const raw = new Array(24).fill(0);
-  for (const e of entries) {
-    if (e.timestamp < cutoff) continue;
-    const hour = new Date(e.timestamp).getHours();
-    raw[hour] = (raw[hour] ?? 0) + e.inputTokens + e.outputTokens + e.cacheCreationTokens + e.cacheReadTokens;
-  }
-  let maxTokens = 0;
-  let peakHour = 0;
-  for (let h = 0; h < 24; h++) {
-    if ((raw[h] ?? 0) > maxTokens) {
-      maxTokens = raw[h] ?? 0;
-      peakHour = h;
-    }
-  }
-  if (maxTokens === 0) return null;
-  const end = (peakHour + 1) % 24;
-  const label = `${String(peakHour).padStart(2, "0")}:00\u2013${String(end).padStart(2, "0")}:00`;
-  const raw12 = new Array(12).fill(0);
-  for (let i = 0; i < 12; i++) {
-    raw12[i] = (raw[i * 2] ?? 0) + (raw[i * 2 + 1] ?? 0);
-  }
-  const maxBucket = Math.max(...raw12);
-  const buckets = raw12.map((v) => maxBucket > 0 ? v / maxBucket : 0);
-  return { hour: peakHour, label, buckets };
-}
-
-// src/widgets/PeakTime.ts
-var PeakTimeWidget = {
-  id: "peakTime",
-  labelKey: "widget.peakTime",
-  render(ctx, _cfg) {
-    if (!ctx.usage) return null;
-    const result = computePeakTime(ctx.usage.allEntries);
-    if (!result) return ctx.t("peak.none");
-    return result.label;
   }
 };
 
@@ -1001,65 +950,13 @@ function renderRateLimitSlot(params) {
   const timeExpr = timeExprWidth != null ? `(${timeStr})`.padEnd(timeExprWidth) : `(${timeStr})`;
   return `${paddedPrefix} ${buildBar(pct, color)} ${fmtPct(pct)} ${timeExpr}`;
 }
-
-// src/widgets/RateLimit.ts
 function createRateLimitWidget(params) {
-  const { id, labelKey, prefix, color, period } = params;
+  const { id, labelKey, prefix, color, getSlot, timeFormat, prefixWidth, timeExprWidth } = params;
   return {
     id,
     labelKey,
     render(ctx, _cfg) {
-      const slot = ctx.stdin.rate_limits?.[period];
-      return renderRateLimitSlot({
-        prefix,
-        color,
-        usedPercent: slot?.used_percentage ?? null,
-        resetsAtMs: slot?.resets_at != null ? slot.resets_at * 1e3 : null,
-        now: ctx.now.getTime()
-      });
-    }
-  };
-}
-var RateLimitWidget = createRateLimitWidget({
-  id: "rateLimit",
-  labelKey: "widget.rateLimit",
-  prefix: "5h",
-  color: "#ffd93d",
-  period: "five_hour"
-});
-var WeeklyRateLimitWidget = createRateLimitWidget({
-  id: "weeklyRateLimit",
-  labelKey: "widget.weeklyRateLimit",
-  prefix: "All",
-  color: "#6bcb77",
-  period: "seven_day"
-});
-
-// src/widgets/ClaudePeak.ts
-import chalk2 from "chalk";
-var COLOR_PEAK = "#ff4d4d";
-var COLOR_OFFPEAK = "#4dff6e";
-var ClaudePeakWidget = {
-  id: "claudePeak",
-  labelKey: "widget.claudePeak",
-  render(_ctx, _cfg) {
-    const { isPeak, remainingMs } = getClaudePeakInfo();
-    const dot = isPeak ? "\u{1F534}" : "\u{1F7E2}";
-    const status = chalk2.hex(isPeak ? COLOR_PEAK : COLOR_OFFPEAK)(isPeak ? "Peak" : "Off-Peak");
-    return `${dot} ${status} (${formatRemainingHM(remainingMs)})`;
-  }
-};
-
-// src/widgets/CodexRateLimit.ts
-var PREFIX_WIDTH = 3;
-var TIME_EXPR_WIDTH = 11;
-function createCodexRateLimitWidget(params) {
-  const { id, labelKey, prefix, color, period, timeFormat, prefixWidth, timeExprWidth } = params;
-  return {
-    id,
-    labelKey,
-    render(ctx, _cfg) {
-      const slot = ctx.codex?.rateLimits?.[period];
+      const slot = getSlot(ctx);
       return renderRateLimitSlot({
         prefix,
         color,
@@ -1073,22 +970,50 @@ function createCodexRateLimitWidget(params) {
     }
   };
 }
-var CodexRateLimitWidget = createCodexRateLimitWidget({
+
+// src/widgets/RateLimit.ts
+var RateLimitWidget = createRateLimitWidget({
+  id: "rateLimit",
+  labelKey: "widget.rateLimit",
+  prefix: "5h",
+  color: "#ffd93d",
+  getSlot: (ctx) => {
+    const s = ctx.stdin.rate_limits?.five_hour;
+    if (!s || s.resets_at == null) return null;
+    return { usedPercent: s.used_percentage ?? 0, resetsAt: s.resets_at };
+  }
+});
+var WeeklyRateLimitWidget = createRateLimitWidget({
+  id: "weeklyRateLimit",
+  labelKey: "widget.weeklyRateLimit",
+  prefix: "All",
+  color: "#6bcb77",
+  getSlot: (ctx) => {
+    const s = ctx.stdin.rate_limits?.seven_day;
+    if (!s || s.resets_at == null) return null;
+    return { usedPercent: s.used_percentage ?? 0, resetsAt: s.resets_at };
+  }
+});
+
+// src/widgets/CodexRateLimit.ts
+var PREFIX_WIDTH = 3;
+var TIME_EXPR_WIDTH = 11;
+var CodexRateLimitWidget = createRateLimitWidget({
   id: "codexRateLimit",
   labelKey: "widget.codexRateLimit",
   prefix: "5h",
   color: "#ff9f43",
-  period: "primary",
+  getSlot: (ctx) => ctx.codex?.rateLimits?.primary ?? null,
   timeFormat: "remaining",
   prefixWidth: PREFIX_WIDTH,
   timeExprWidth: TIME_EXPR_WIDTH
 });
-var CodexWeeklyRateLimitWidget = createCodexRateLimitWidget({
+var CodexWeeklyRateLimitWidget = createRateLimitWidget({
   id: "codexWeeklyRateLimit",
   labelKey: "widget.codexWeeklyRateLimit",
   prefix: "7d",
   color: "#48dbfb",
-  period: "secondary",
+  getSlot: (ctx) => ctx.codex?.rateLimits?.secondary ?? null,
   timeFormat: "remaining",
   prefixWidth: PREFIX_WIDTH,
   timeExprWidth: TIME_EXPR_WIDTH
@@ -1172,12 +1097,21 @@ function gitCommand(args, cwd) {
     return null;
   }
 }
+var branchCache = /* @__PURE__ */ new Map();
+function getCachedBranch(cwd) {
+  const now = Date.now();
+  const cached = branchCache.get(cwd);
+  if (cached && now < cached.expiresAt) return cached.value;
+  const value = gitCommand(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+  branchCache.set(cwd, { value, expiresAt: now + 5e3 });
+  return value;
+}
 var GitBranchWidget = {
   id: "gitBranch",
   labelKey: "widget.gitBranch",
   render(ctx, _cfg) {
     const cwd = ctx.stdin.cwd ?? process.cwd();
-    return gitCommand(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+    return getCachedBranch(cwd);
   }
 };
 var GitRepoWidget = {
@@ -1188,7 +1122,7 @@ var GitRepoWidget = {
     const topLevel = gitCommand(["rev-parse", "--show-toplevel"], cwd);
     if (!topLevel) return null;
     const repo = basename(topLevel);
-    const branch = gitCommand(["rev-parse", "--abbrev-ref", "HEAD"], cwd);
+    const branch = getCachedBranch(cwd);
     return branch ? `\u{1F4C1} ${repo}(${branch})` : `\u{1F4C1} ${repo}`;
   }
 };
@@ -1199,7 +1133,6 @@ var ALL_WIDGETS = [
   ContextWidget,
   RateLimitWidget,
   WeeklyRateLimitWidget,
-  PeakTimeWidget,
   DailyUsageWidget,
   DailyResetTimerWidget,
   WeeklyUsageWidget,
@@ -1207,7 +1140,6 @@ var ALL_WIDGETS = [
   SonnetWeeklyUsageWidget,
   SonnetWeeklyResetTimerWidget,
   GptUsageWidget,
-  ClaudePeakWidget,
   CodexRateLimitWidget,
   CodexWeeklyRateLimitWidget,
   SpacerWidget,
@@ -1232,9 +1164,9 @@ function renderLine(widgetCfgs, ctx, separator) {
     const text = widget.render(ctx, cfg);
     if (!text) continue;
     const color = cfg.color ?? ctx.theme.accent;
-    parts.push(chalk3.hex(color)(text));
+    parts.push(chalk2.hex(color)(text));
   }
-  const sep = chalk3.hex(ctx.theme.muted)(separator);
+  const sep = chalk2.hex(ctx.theme.muted)(separator);
   return parts.join(sep);
 }
 function renderAllLines(lines, ctx, separator) {
@@ -1355,17 +1287,15 @@ var PRESETS = {
     lines: [
       [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
       [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
-      [{ id: "model" }, { id: "claudePeak" }]
+      [{ id: "model" }]
     ]
   },
   full: {
     lines: [
       [
         { id: "model" },
-        { id: "claudePeak" },
         { id: "context" },
         { id: "rateLimit" },
-        { id: "peakTime" },
         { id: "dailyUsage" },
         { id: "dailyReset" },
         { id: "weeklyUsage" },
@@ -1381,10 +1311,8 @@ var PRESETS = {
     lines: [
       [
         { id: "model" },
-        { id: "claudePeak" },
         { id: "context" },
         { id: "rateLimit" },
-        { id: "peakTime" },
         { id: "dailyUsage" },
         { id: "dailyReset" },
         { id: "weeklyUsage" },
@@ -1402,7 +1330,7 @@ var PRESETS = {
     lines: [
       [{ id: "dailyUsage" }, { id: "context" }, { id: "rateLimit" }],
       [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
-      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }]
+      [{ id: "model" }, { id: "gitRepo" }]
     ]
   },
   plus: {
@@ -1411,7 +1339,7 @@ var PRESETS = {
       [{ id: "weeklyUsage" }, { id: "weeklyRateLimit" }],
       [{ id: "spacer" }],
       [{ id: "cacheHit" }, { id: "cacheTtl" }, { id: "sessionCost" }],
-      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }]
+      [{ id: "model" }, { id: "gitRepo" }]
     ]
   },
   pro: {
@@ -1421,7 +1349,7 @@ var PRESETS = {
       [{ id: "codexModel" }, { id: "codexRateLimit" }, { id: "codexWeeklyRateLimit" }],
       [{ id: "spacer" }],
       [{ id: "cacheHit" }, { id: "cacheTtl" }, { id: "sessionCost" }],
-      [{ id: "model" }, { id: "claudePeak" }, { id: "gitRepo" }]
+      [{ id: "model" }, { id: "gitRepo" }]
     ]
   }
 };
@@ -1791,12 +1719,14 @@ async function runSetupWizard() {
 import fs8 from "fs";
 import path6 from "path";
 import { fileURLToPath } from "url";
+import { z as z7 } from "zod";
+var ClaudeSettingsSchema2 = z7.object({ statusLine: z7.record(z7.unknown()).optional() }).catchall(z7.unknown());
 function getClaudeSettingsPath() {
-  return path6.join(getClaudeDir2(), "settings.json");
+  return path6.join(getClaudeDir(), "settings.json");
 }
 async function resolveCliPath() {
   const pluginCacheBase = path6.join(
-    getClaudeDir2(),
+    getClaudeDir(),
     "plugins",
     "cache",
     "festatusline",
@@ -1818,7 +1748,8 @@ async function installToClaude(force = false) {
   let current = {};
   try {
     const raw = await fs8.promises.readFile(settingsPath, "utf8");
-    current = JSON.parse(raw);
+    const parsed = ClaudeSettingsSchema2.safeParse(JSON.parse(raw));
+    if (parsed.success) current = parsed.data;
   } catch {
   }
   if (current.statusLine && !force) {
@@ -1851,7 +1782,7 @@ async function installToClaude(force = false) {
 // src/config/doctor.ts
 import fs9 from "fs";
 import path7 from "path";
-import os5 from "os";
+import os3 from "os";
 async function exists(p) {
   try {
     await fs9.promises.access(p);
@@ -1861,8 +1792,8 @@ async function exists(p) {
   }
 }
 async function runDoctor() {
-  const claudeDir = getClaudeDir2();
-  const codexDir = process.env.CODEX_CONFIG_DIR ?? path7.join(os5.homedir(), ".codex");
+  const claudeDir = getClaudeDir();
+  const codexDir = process.env.CODEX_CONFIG_DIR ?? path7.join(os3.homedir(), ".codex");
   const claudeOk = await exists(claudeDir);
   const codexOk = await exists(codexDir);
   process.stdout.write(
@@ -1876,7 +1807,7 @@ async function runDoctor() {
 }
 
 // src/cli.ts
-chalk4.level = 3;
+chalk3.level = 3;
 function isLocale(v) {
   return v === "ko" || v === "en" || v === "zh";
 }

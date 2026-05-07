@@ -5,17 +5,15 @@ export const PRESETS: Record<string, Partial<Settings>> = {
     lines: [
       [{ id: 'dailyUsage' }, { id: 'context' }, { id: 'rateLimit' }],
       [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
-      [{ id: 'model' }, { id: 'claudePeak' }],
+      [{ id: 'model' }],
     ],
   },
   full: {
     lines: [
       [
         { id: 'model' },
-        { id: 'claudePeak' },
         { id: 'context' },
         { id: 'rateLimit' },
-        { id: 'peakTime' },
         { id: 'dailyUsage' },
         { id: 'dailyReset' },
         { id: 'weeklyUsage' },
@@ -31,10 +29,8 @@ export const PRESETS: Record<string, Partial<Settings>> = {
     lines: [
       [
         { id: 'model' },
-        { id: 'claudePeak' },
         { id: 'context' },
         { id: 'rateLimit' },
-        { id: 'peakTime' },
         { id: 'dailyUsage' },
         { id: 'dailyReset' },
         { id: 'weeklyUsage' },
@@ -52,7 +48,7 @@ export const PRESETS: Record<string, Partial<Settings>> = {
     lines: [
       [{ id: 'dailyUsage' }, { id: 'context' }, { id: 'rateLimit' }],
       [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
-      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }],
+      [{ id: 'model' }, { id: 'gitRepo' }],
     ],
   },
   plus: {
@@ -61,7 +57,7 @@ export const PRESETS: Record<string, Partial<Settings>> = {
       [{ id: 'weeklyUsage' }, { id: 'weeklyRateLimit' }],
       [{ id: 'spacer' }],
       [{ id: 'cacheHit' }, { id: 'cacheTtl' }, { id: 'sessionCost' }],
-      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }],
+      [{ id: 'model' }, { id: 'gitRepo' }],
     ],
   },
   pro: {
@@ -71,7 +67,7 @@ export const PRESETS: Record<string, Partial<Settings>> = {
       [{ id: 'codexModel' }, { id: 'codexRateLimit' }, { id: 'codexWeeklyRateLimit' }],
       [{ id: 'spacer' }],
       [{ id: 'cacheHit' }, { id: 'cacheTtl' }, { id: 'sessionCost' }],
-      [{ id: 'model' }, { id: 'claudePeak' }, { id: 'gitRepo' }],
+      [{ id: 'model' }, { id: 'gitRepo' }],
     ],
   },
 };

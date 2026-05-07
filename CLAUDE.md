@@ -63,7 +63,6 @@ src/
 |---|---|
 | `model` | 현재 모델명 |
 | `context` | 컨텍스트 사용률 바 + % |
-| `peakTime` | 최근 14일 피크 시간대 |
 | `dailyUsage` | 오늘 총 토큰 수 |
 | `dailyReset` | 일간 리셋까지 남은 시간 |
 | `weeklyUsage` | 최근 7일 총 토큰 수 |
