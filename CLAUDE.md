@@ -6,7 +6,7 @@ Claude Code 용 상태바(statusline) 도구. [ccstatusline](https://github.com/
 
 - **다국어(ko/en/zh)** 지원 — `FESTATUSLINE_LOCALE` 환경변수 또는 `$LANG` 자동 감지
 - **테마 5종** 내장: default, dracula, nord, gruvbox, tokyo-night
-- **한국 개발자 친화 위젯**: 일간/주간/Sonnet 주간 사용량 + 초기화 타이머, 피크 시간대
+- **한국 개발자 친화 위젯**: 일간/주간/Sonnet 주간 사용량 + 초기화 타이머
 - **Codex CLI 사용량** 통합 (`~/.codex`)
 - 런타임: Node.js ≥ 18 전용 (Bun 미사용)
 
@@ -41,10 +41,13 @@ src/
 │   ├── stdin.ts           # Claude Code stdin JSON 파싱 (zod)
 │   ├── jsonl.ts           # ~/.claude/projects/**/*.jsonl 파싱 (mtime 캐시)
 │   ├── usage.ts           # 일간/주간/Sonnet 주간 사용량 집계 (30s 캐시)
-│   ├── peak-time.ts       # hourly bucket → 피크 시간대 계산
 │   ├── reset.ts           # 일간/주간 리셋 카운트다운
-│   └── codex.ts           # ~/.codex 파싱 → GPT 사용량
-├── widgets/               # 위젯 10종 + 레지스트리
+│   ├── codex.ts           # ~/.codex 파싱 → GPT 사용량
+│   ├── cache.ts           # TTL 캐시 유틸리티
+│   ├── claude-settings.ts # ~/.claude/settings.json 파싱
+│   └── time.ts            # 시간 유틸 (날짜 경계 계산)
+├── widgets/               # 위젯 20종 + 레지스트리
+├── utils/                 # 공통 유틸 (bar, duration, tokens)
 ├── render/                # 위젯 배열 → stdout 한 줄 문자열
 ├── i18n/                  # ko/en/zh 번들 + t() 헬퍼
 ├── config/                # zod 스키마, load/save, 프리셋, install/doctor
@@ -61,8 +64,10 @@ src/
 
 | id | 설명 |
 |---|---|
-| `model` | 현재 모델명 |
+| `model` | 현재 Claude 모델명 |
 | `context` | 컨텍스트 사용률 바 + % |
+| `rateLimit` | Claude 5시간 할당량 바 |
+| `weeklyRateLimit` | Claude 7일 할당량 바 |
 | `dailyUsage` | 오늘 총 토큰 수 |
 | `dailyReset` | 일간 리셋까지 남은 시간 |
 | `weeklyUsage` | 최근 7일 총 토큰 수 |
@@ -70,6 +75,15 @@ src/
 | `sonnetWeeklyUsage` | 최근 7일 Sonnet 모델 토큰 수 |
 | `sonnetWeeklyReset` | Sonnet 주간 리셋까지 남은 시간 |
 | `gptUsage` | 오늘 Codex CLI 요청 수 |
+| `codexRateLimit` | Codex 5시간 한도 바 |
+| `codexWeeklyRateLimit` | Codex 7일 한도 바 |
+| `codexModel` | 현재 Codex 모델명 |
+| `sessionCost` | 현재 세션 비용 |
+| `cacheHit` | 프롬프트 캐시 적중률 |
+| `cacheTtl` | 캐시 TTL 잔여 시간 |
+| `gitBranch` | 현재 Git 브랜치명 |
+| `gitRepo` | 현재 Git 레포명 |
+| `spacer` | 빈 공백 구분자 |
 
 ## 코딩 컨벤션
 
