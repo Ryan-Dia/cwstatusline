@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { renderRateLimitSlot } from '../src/widgets/rateLimitRenderer.js';
-import { themeColor } from '../src/utils/color.js';
-import { themes } from '../src/theme/themes.js';
 
 const NOW = 1_000_000_000_000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -78,24 +76,5 @@ describe('renderRateLimitSlot', () => {
     const match = result.match(/\([^)]+\)\s*/);
     expect(match).not.toBeNull();
     expect(match![0].length).toBe(15);
-  });
-});
-
-describe('themeColor', () => {
-  const theme = themes.default!;
-
-  it('returns accent for usage below 60%', () => {
-    expect(themeColor(0, theme)).toBe(theme.accent);
-    expect(themeColor(59, theme)).toBe(theme.accent);
-  });
-
-  it('returns warn for usage between 60% and 84%', () => {
-    expect(themeColor(60, theme)).toBe(theme.warn);
-    expect(themeColor(84, theme)).toBe(theme.warn);
-  });
-
-  it('returns danger for usage at or above 85%', () => {
-    expect(themeColor(85, theme)).toBe(theme.danger);
-    expect(themeColor(100, theme)).toBe(theme.danger);
   });
 });

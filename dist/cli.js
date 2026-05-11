@@ -921,19 +921,11 @@ var GptUsageWidget = {
   }
 };
 
-// src/utils/color.ts
-function themeColor(usedPercent, theme) {
-  if (usedPercent >= 85) return theme.danger;
-  if (usedPercent >= 60) return theme.warn;
-  return theme.accent;
-}
-
 // src/widgets/rateLimitRenderer.ts
 function renderRateLimitSlot(params) {
   const {
     prefix,
     color,
-    theme,
     usedPercent,
     resetsAtMs,
     now,
@@ -942,13 +934,11 @@ function renderRateLimitSlot(params) {
     timeExprWidth
   } = params;
   const paddedPrefix = prefixWidth != null ? prefix.padEnd(prefixWidth) : prefix;
-  const effectiveColor = theme ? themeColor(usedPercent ?? 0, theme) : color ?? "#888888";
   if (usedPercent == null || resetsAtMs == null) {
-    return `${paddedPrefix} ${buildBar(0, effectiveColor)}  ?%`;
+    return `${paddedPrefix} ${buildBar(0, color)}  ?%`;
   }
   const remainingMs = resetsAtMs - now;
   const pct = remainingMs <= 0 ? 0 : Math.round(usedPercent);
-  const barColor = theme ? themeColor(pct, theme) : effectiveColor;
   let timeStr;
   if (remainingMs <= 0) {
     timeStr = "reset";
@@ -958,10 +948,10 @@ function renderRateLimitSlot(params) {
     timeStr = formatRemainingHM(remainingMs);
   }
   const timeExpr = timeExprWidth != null ? `(${timeStr})`.padEnd(timeExprWidth) : `(${timeStr})`;
-  return `${paddedPrefix} ${buildBar(pct, barColor)} ${fmtPct(pct)} ${timeExpr}`;
+  return `${paddedPrefix} ${buildBar(pct, color)} ${fmtPct(pct)} ${timeExpr}`;
 }
 function createRateLimitWidget(params) {
-  const { id, labelKey, prefix, getSlot, timeFormat, prefixWidth, timeExprWidth } = params;
+  const { id, labelKey, prefix, color, getSlot, timeFormat, prefixWidth, timeExprWidth } = params;
   return {
     id,
     labelKey,
@@ -969,7 +959,7 @@ function createRateLimitWidget(params) {
       const slot = getSlot(ctx);
       return renderRateLimitSlot({
         prefix,
-        theme: ctx.theme,
+        color,
         usedPercent: slot?.usedPercent ?? null,
         resetsAtMs: slot?.resetsAt != null ? slot.resetsAt * 1e3 : null,
         now: ctx.now.getTime(),
@@ -986,6 +976,7 @@ var RateLimitWidget = createRateLimitWidget({
   id: "rateLimit",
   labelKey: "widget.rateLimit",
   prefix: "5h",
+  color: "#ffd93d",
   getSlot: (ctx) => {
     const s = ctx.stdin.rate_limits?.five_hour;
     if (!s || s.resets_at == null) return null;
@@ -996,6 +987,7 @@ var WeeklyRateLimitWidget = createRateLimitWidget({
   id: "weeklyRateLimit",
   labelKey: "widget.weeklyRateLimit",
   prefix: "All",
+  color: "#6bcb77",
   getSlot: (ctx) => {
     const s = ctx.stdin.rate_limits?.seven_day;
     if (!s || s.resets_at == null) return null;
@@ -1010,6 +1002,7 @@ var CodexRateLimitWidget = createRateLimitWidget({
   id: "codexRateLimit",
   labelKey: "widget.codexRateLimit",
   prefix: "5h",
+  color: "#ff9f43",
   getSlot: (ctx) => ctx.codex?.rateLimits?.primary ?? null,
   timeFormat: "remaining",
   prefixWidth: PREFIX_WIDTH,
@@ -1019,6 +1012,7 @@ var CodexWeeklyRateLimitWidget = createRateLimitWidget({
   id: "codexWeeklyRateLimit",
   labelKey: "widget.codexWeeklyRateLimit",
   prefix: "7d",
+  color: "#48dbfb",
   getSlot: (ctx) => ctx.codex?.rateLimits?.secondary ?? null,
   timeFormat: "remaining",
   prefixWidth: PREFIX_WIDTH,
