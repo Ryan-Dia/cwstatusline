@@ -5,7 +5,6 @@ export const RateLimitWidget: Widget = createRateLimitWidget({
   id: 'rateLimit',
   labelKey: 'widget.rateLimit',
   prefix: '5h',
-  color: '#ffd93d',
   getSlot: (ctx) => {
     const s = ctx.stdin.rate_limits?.five_hour;
     if (!s || s.resets_at == null) return null;
@@ -17,7 +16,6 @@ export const WeeklyRateLimitWidget: Widget = createRateLimitWidget({
   id: 'weeklyRateLimit',
   labelKey: 'widget.weeklyRateLimit',
   prefix: 'All',
-  color: '#6bcb77',
   getSlot: (ctx) => {
     const s = ctx.stdin.rate_limits?.seven_day;
     if (!s || s.resets_at == null) return null;
